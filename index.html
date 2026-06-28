@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Planner de Viajes · Firebase V17</title>
+<title>Planner de Viajes · Firebase V18</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#2563eb;--green:#16a34a;--yellow:#ca8a04;--purple:#7c3aed;--red:#dc2626;--bg:#f3f4f6;--card:#fff;--line:#e5e7eb;--ink:#172033;--muted:#667085}
@@ -118,7 +118,7 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
   </div>
 </div>
 
-<header><h1>Planner de Viajes · Firebase V17</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
+<header><h1>Planner de Viajes · Firebase V18</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
 <div class="shell">
 
 <div class="top-user">
@@ -1564,7 +1564,6 @@ function savePlannerState(){
     saveDebounceTimer=setTimeout(()=>window.firebaseSaveTripState(), 450);
   }
 }
-}
 function rebuildCustomLayer(){
   customLayer.clearLayers();
   customPoints.forEach(p=>{
@@ -1767,7 +1766,7 @@ function listenTrips(user){
     if(window.currentTripId !== next) selectTrip(next, user);
   }, err=>{
     console.error(err);
-    setSync("Error leyendo viajes", false);
+    setSync("Error leyendo viajes", false); const msgEl=document.getElementById("authMsg"); if(msgEl) msgEl.textContent="No se pudieron leer los viajes. Revisa las reglas de Firestore.";
   });
 }
 
@@ -1872,8 +1871,15 @@ onAuthStateChanged(auth, async (user)=>{
   $("authOverlay").style.display="none";
   setSync("Firebase: login OK");
   await ensureUser(user);
-  await ensureInitialTrip(user);
-  listenTrips(user);
+  try {
+    await ensureInitialTrip(user);
+    listenTrips(user);
+  } catch(e) {
+    console.error(e);
+    setSync("Error permisos Firestore", false);
+    const msgEl=document.getElementById("authMsg");
+    if(msgEl) msgEl.textContent="Login OK, pero Firestore rechazó permisos. Revisa reglas.";
+  }
 });
 </script>
 
