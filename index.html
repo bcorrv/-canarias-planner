@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Planner de Viajes · Firebase V18</title>
+<title>Planner de Viajes · Firebase V19</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#2563eb;--green:#16a34a;--yellow:#ca8a04;--purple:#7c3aed;--red:#dc2626;--bg:#f3f4f6;--card:#fff;--line:#e5e7eb;--ink:#172033;--muted:#667085}
@@ -98,6 +98,18 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
 
 @media(max-width:1200px){.map-layout{grid-template-columns:1fr}#map{height:62vh;min-height:500px}.planner-panel{height:auto;min-height:auto}}
 @media(max-width:1050px){header{padding:16px}.shell{padding:10px;padding-bottom:86px}.tabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}.tab-btn{white-space:nowrap}.span-3,.span-12{grid-column:span 12}.image-route-grid{grid-template-columns:1fr}.table-wrap{max-height:none;overflow:visible;border:none}.table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap th,.table-wrap td,.table-wrap tr{display:block}.table-wrap thead{display:none}.table-wrap tr{background:white;border:1px solid #e5e7eb;border-radius:14px;padding:10px;margin:10px 0}.table-wrap td{border:none;padding:6px 0}.table-wrap td::before{content:attr(data-label);display:block;color:#667085;font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:2px}}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:99998;display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(10px)}
+.modal-card{width:min(760px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:24px;padding:22px;box-shadow:0 28px 90px rgba(0,0,0,.34)}
+.modal-card h2{margin:0 0 8px}.modal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.modal-grid .full{grid-column:1/-1}
+.modal-card textarea{width:100%;min-height:92px;border:1px solid #cbd5e1;border-radius:10px;padding:10px;font-family:inherit}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}.modal-actions button{border:1px solid #cbd5e1;background:#fff;border-radius:12px;padding:10px 12px;font-weight:900;cursor:pointer}.modal-actions .primary{background:#2563eb;color:#fff;border-color:#2563eb}
+.user-grid,.rec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.user-card,.rec-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 4px 15px rgba(15,23,42,.04)}
+.user-card strong,.rec-card strong{display:block;margin-bottom:5px}.role-pill{display:inline-flex;padding:4px 8px;border-radius:999px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:900;font-size:12px}
+.user-actions,.rec-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.user-actions button,.rec-actions button{border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:5px 8px;font-size:12px;font-weight:800;cursor:pointer}.rec-actions a{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:5px 8px;font-size:12px;font-weight:800;text-decoration:none}
+.trip-meta-panel{background:#f8fafc;border:1px solid #e5e7eb;border-radius:16px;padding:12px;margin-bottom:12px}.trip-meta-panel b{color:#0f172a}
+@media(max-width:1050px){.user-grid,.rec-grid{grid-template-columns:1fr}.modal-grid{grid-template-columns:1fr}.modal-grid .full{grid-column:auto}}
+
 </style>
 </head>
 <body>
@@ -118,7 +130,71 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
   </div>
 </div>
 
-<header><h1>Planner de Viajes · Firebase V18</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
+<header><h1>Planner de Viajes · Firebase V19</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
+
+<div id="tripWizard" class="modal-overlay">
+  <div class="modal-card">
+    <h2>Crear nuevo viaje</h2>
+    <p class="muted">Completa el esquema base. El mapa se centrará en la primera ubicación y las recomendaciones se generarán desde las ubicaciones indicadas.</p>
+    <form id="tripWizardForm">
+      <div class="modal-grid">
+        <div class="full">
+          <label>Nombre del viaje</label>
+          <input id="twTitle" required placeholder="Ej: Japón 2027, Canarias 2028">
+        </div>
+        <div>
+          <label>Fecha inicio</label>
+          <input id="twStart" type="date">
+        </div>
+        <div>
+          <label>Fecha fin</label>
+          <input id="twEnd" type="date">
+        </div>
+        <div class="full">
+          <label>Ubicaciones principales</label>
+          <textarea id="twLocations" placeholder="Ej: Tenerife, Gran Canaria, Lanzarote&#10;O: Tokio, Kioto, Osaka"></textarea>
+        </div>
+        <div>
+          <label>Estilo de viaje</label>
+          <select id="twStyle">
+            <option value="balanceado">Balanceado</option>
+            <option value="playa">Playa / descanso</option>
+            <option value="trekking">Trekking / naturaleza</option>
+            <option value="gastronomico">Gastronómico</option>
+            <option value="cultural">Cultural</option>
+            <option value="lujo-controlado">Lujo controlado</option>
+            <option value="under-local">Local / under</option>
+          </select>
+        </div>
+        <div>
+          <label>Ritmo</label>
+          <select id="twPace">
+            <option value="tranquilo">Tranquilo</option>
+            <option value="balanceado" selected>Balanceado</option>
+            <option value="intenso">Intenso</option>
+          </select>
+        </div>
+        <div>
+          <label>Presupuesto objetivo pp</label>
+          <input id="twBudget" placeholder="Ej: 4.500.000 CLP">
+        </div>
+        <div>
+          <label>Participantes iniciales</label>
+          <input id="twMembers" placeholder="emails separados por coma">
+        </div>
+        <div class="full">
+          <label>Notas / intención del viaje</label>
+          <textarea id="twNotes" placeholder="Qué buscamos, qué evitar, intereses principales..."></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" onclick="closeTripWizard()">Cancelar</button>
+        <button class="primary" type="submit">Crear viaje</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="shell">
 
 <div class="top-user">
@@ -133,7 +209,7 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
   <button id="inviteBtn">Invitar por email</button>
 </div>
 
-<nav class="tabs"><button class="tab-btn active" data-tab="mapa">Mapa + optimizador</button><button class="tab-btn" data-tab="imagenes">Imágenes por ruta</button><button class="tab-btn" data-tab="rutas">Rutas base</button><button class="tab-btn" data-tab="transporte">Transporte</button><button class="tab-btn" data-tab="inventario">Inventario</button><button class="tab-btn" data-tab="planner">Mi plan</button><button class="tab-btn" data-tab="resumen">Resumen</button></nav>
+<nav class="tabs"><button class="tab-btn active" data-tab="mapa">Mapa + optimizador</button><button class="tab-btn" data-tab="imagenes">Imágenes por ruta</button><button class="tab-btn" data-tab="rutas">Rutas base</button><button class="tab-btn" data-tab="transporte">Transporte</button><button class="tab-btn" data-tab="inventario">Inventario</button><button class="tab-btn" data-tab="recommended">Recomendados</button><button class="tab-btn" data-tab="users">Usuarios</button><button class="tab-btn" data-tab="planner">Mi plan</button><button class="tab-btn" data-tab="resumen">Resumen</button></nav>
 <section id="mapa" class="tab active"><div class="map-layout"><aside class="card"><h2>Mapa operativo</h2><div class="map-focus-note">Filtro visual. Para rediseñar el viaje usa el panel “Optimizador” a la derecha.</div><label>Día / tramo</label><select id="dayFilter"><option value="all">Todos</option></select><label>Destino</label><select id="areaFilter"><option value="all">Todos</option></select><label>Ruta diaria base</label><select id="routeFilter"><option value="all">Todas las rutas</option></select><label>Categorías</label><div id="catChecks" class="checkgrid"></div><div class="filter-row"><button id="onlyRecommended">Solo recomendados</button><button id="showAll">Ver todo</button></div><label><input type="checkbox" id="showTransport" checked style="width:auto"> Mostrar costos de tramos</label><label>Buscar</label><input id="searchBox" placeholder="Ej: hotel, Teide, horario, US$..."><div class="legend"><span>🔵 Hotel sel.</span><span>🔷 Hotel opción</span><span>🔴 Rest.</span><span>🟣 Tour</span><span>🟢 Atractivo</span><span>⚫ Tramo</span></div><h3 style="margin-top:14px">Rutas base</h3><div id="routeButtons" class="route-list"></div></aside><main><div id="map"></div></main><aside class="card planner-panel">
 <h2>Panel del mapa</h2>
 <div class="map-focus-note">Toca cualquier marcador o cualquier punto del mapa. Si haces clic fuera de un marcador, creo un punto exacto en esa coordenada. No lo asocio a ningún atractivo cercano.</div>
@@ -1206,6 +1282,32 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
 <td>Costa volcánica dramática.</td><td><a href="https://www.google.com/maps/search/?api=1&query=Los+Hervideros+28.9665%2C-13.83" target="_blank">Mapa</a> · <a href="https://www.google.com/search?tbm=isch&q=Los+Hervideros+Lanzarote" target="_blank">Fotos</a> · <a href="https://www.google.com/search?q=Los+Hervideros+Lanzarote" target="_blank">Web</a></td>
 </tr></tbody></table></div></div></section>
 
+
+<section id="recommended" class="tab">
+  <div class="card">
+    <h2>Lugares recomendados y highlights</h2>
+    <div id="tripMetaPanel" class="trip-meta-panel">Cargando información del viaje...</div>
+    <p class="muted">Esta versión genera búsquedas profundas por ubicación para descubrir lugares, guías y testimonios. Para traer snippets automáticamente desde Tripadvisor/blogs necesitaremos una API o backend en una fase posterior.</p>
+    <div class="filter-row" style="margin:10px 0;">
+      <button onclick="renderRecommendations()">Actualizar recomendaciones</button>
+      <button onclick="openTripWizard()">Editar/crear viaje</button>
+    </div>
+    <div id="recommendationsGrid" class="rec-grid"></div>
+  </div>
+</section>
+
+<section id="users" class="tab">
+  <div class="card">
+    <h2>Gestión de usuarios</h2>
+    <p class="muted">Invita participantes por email y asigna roles por viaje. Owner puede administrar usuarios; editor puede planificar; viewer solo debería mirar.</p>
+    <div class="filter-row" style="margin:10px 0;">
+      <button onclick="firebaseInviteMemberPrompt && firebaseInviteMemberPrompt()">Invitar usuario</button>
+      <button onclick="renderUsersPanel()">Actualizar lista</button>
+    </div>
+    <div id="usersGrid" class="user-grid"></div>
+  </div>
+</section>
+
 <section id="planner" class="tab">
 <div class="grid">
   <div class="card span-12">
@@ -1245,7 +1347,7 @@ var activeContext=null;
 var referencePoint=null;
 var itineraryPlan=[];
 var plannerNotes={};
-var currentTripId=null;
+var currentTripId=null;var currentTripData=null;
 var currentUser=null;
 var firebaseReady=false;
 var saveDebounceTimer=null;
@@ -1650,7 +1752,7 @@ document.getElementById('optimizeBtn').onclick=optimizePlan;
 document.getElementById('selectBase').onclick=()=>{selectedPlan=new Set(items.filter(i=>i.defaultSelected && i.kind!=='operator').map(i=>i.uid));renderPlanner();optimizePlan();render();};
 document.getElementById('clearPlan').onclick=()=>{selectedPlan=new Set();renderPlanner();planOutput.innerHTML='';customRouteLayer.clearLayers();render();};
 plannerSearch.addEventListener('input',renderPlanner);
-window.openMapPoint=openMapPoint;window.openRoute=openRoute;window.togglePlan=togglePlan;window.deleteCustomPoint=deleteCustomPoint;window.renderContext=renderContext;window.renderTimeline=renderTimeline;window.renderPlanner=renderPlanner;window.rebuildCustomLayer=rebuildCustomLayer;window.optimizePlan=optimizePlan;window.getPlannerState=()=>({itineraryPlan, plannerNotes, customPoints, selectedPlan:[...selectedPlan]});window.applyPlannerState=(s)=>{itineraryPlan=s.itineraryPlan||[];plannerNotes=s.plannerNotes||{};customPoints=s.customPoints||[];selectedPlan=new Set(s.selectedPlan||[]);rebuildCustomLayer();renderPlanner();renderTimeline();render();};window.setFirebaseContext=(ctx)=>{currentTripId=ctx.tripId;currentUser=ctx.user;firebaseReady=true;};
+window.openMapPoint=openMapPoint;window.openRoute=openRoute;window.togglePlan=togglePlan;window.deleteCustomPoint=deleteCustomPoint;window.renderContext=renderContext;window.renderTimeline=renderTimeline;window.renderPlanner=renderPlanner;window.rebuildCustomLayer=rebuildCustomLayer;window.optimizePlan=optimizePlan;window.getPlannerState=()=>({itineraryPlan, plannerNotes, customPoints, selectedPlan:[...selectedPlan], highlights:(window.currentTripData&&window.currentTripData.state&&window.currentTripData.state.highlights)||[]});window.applyPlannerState=(s)=>{itineraryPlan=s.itineraryPlan||[];plannerNotes=s.plannerNotes||{};customPoints=s.customPoints||[];selectedPlan=new Set(s.selectedPlan||[]);rebuildCustomLayer();renderPlanner();renderTimeline();render();};window.setFirebaseContext=(ctx)=>{currentTripId=ctx.tripId;currentUser=ctx.user;firebaseReady=true;};
 [dayFilter,areaFilter,routeFilter,searchBox,showTransport].forEach(el=>el.addEventListener('input',render));catChecks.addEventListener('change',render);
 document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>showTab(btn.dataset.tab));
 window.addEventListener('load',()=>{document.querySelectorAll('table').forEach(table=>{const heads=[...table.querySelectorAll('thead th')].map(x=>x.textContent.trim());table.querySelectorAll('tbody tr').forEach(row=>[...row.children].forEach((td,i)=>td.setAttribute('data-label',heads[i]||'')));});loadPlannerState();renderPlanner();renderTimeline();setTimeout(()=>{map.invalidateSize(true);render();},350);});
@@ -1658,10 +1760,95 @@ window.addEventListener('resize',()=>setTimeout(()=>map.invalidateSize(true),150
 render();
 </script>
 
+<script>
+
+function openTripWizard(prefill={}){
+  const m=document.getElementById('tripWizard');
+  if(!m)return;
+  document.getElementById('twTitle').value=prefill.title||'';
+  document.getElementById('twStart').value=prefill.startDate||'';
+  document.getElementById('twEnd').value=prefill.endDate||'';
+  document.getElementById('twLocations').value=(prefill.locations||[]).join ? (prefill.locations||[]).join('\n') : (prefill.locations||'');
+  document.getElementById('twStyle').value=prefill.style||'balanceado';
+  document.getElementById('twPace').value=prefill.pace||'balanceado';
+  document.getElementById('twBudget').value=prefill.budgetTarget||'';
+  document.getElementById('twMembers').value=(prefill.memberEmails||[]).join ? (prefill.memberEmails||[]).join(', ') : (prefill.memberEmails||'');
+  document.getElementById('twNotes').value=prefill.notes||'';
+  m.style.display='flex';
+}
+function closeTripWizard(){const m=document.getElementById('tripWizard');if(m)m.style.display='none';}
+function parseTripWizard(){
+  return {
+    title:document.getElementById('twTitle').value.trim(),
+    startDate:document.getElementById('twStart').value,
+    endDate:document.getElementById('twEnd').value,
+    locations:document.getElementById('twLocations').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean),
+    style:document.getElementById('twStyle').value,
+    pace:document.getElementById('twPace').value,
+    budgetTarget:document.getElementById('twBudget').value.trim(),
+    memberEmails:document.getElementById('twMembers').value.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean),
+    notes:document.getElementById('twNotes').value.trim()
+  };
+}
+function deepSearchUrl(q){return 'https://www.google.com/search?q='+encodeURIComponent(q);}
+function deepImageUrl(q){return 'https://www.google.com/search?tbm=isch&q='+encodeURIComponent(q);}
+function makeRecommendationCards(location, tripMeta={}){
+  const style=tripMeta.style||'balanceado';
+  const base=location;
+  return [
+    {kind:'Top lugares', title:`Qué ver en ${base}`, q:`${base} mejores lugares que ver guía viaje ${style}`},
+    {kind:'Tripadvisor', title:`Tripadvisor ${base}`, q:`site:tripadvisor.com ${base} things to do attractions`},
+    {kind:'Viajeros', title:`Experiencias reales ${base}`, q:`${base} blog viaje experiencia itinerario recomendaciones`},
+    {kind:'Reddit', title:`Opiniones viajeros ${base}`, q:`site:reddit.com/r/travel ${base} itinerary recommendations`},
+    {kind:'YouTube', title:`Vlogs ${base}`, q:`site:youtube.com ${base} travel vlog itinerary`},
+    {kind:'Comida', title:`Restaurantes ${base}`, q:`${base} mejores restaurantes locales comida típica`},
+    {kind:'Naturaleza', title:`Trekking/playas ${base}`, q:`${base} trekking playas miradores naturaleza guía`},
+    {kind:'Mapa', title:`Explorar mapa ${base}`, q:`${base} attractions map`}
+  ];
+}
+function renderRecommendations(){
+  const grid=document.getElementById('recommendationsGrid');
+  if(!grid)return;
+  const trip=window.currentTripData||{};
+  const locations=(trip.locations&&trip.locations.length?trip.locations:[trip.destination, trip.title]).filter(Boolean);
+  const unique=[...new Set(locations)];
+  if(!unique.length){grid.innerHTML='<div class="warn">Este viaje aún no tiene ubicaciones. Crea o edita el viaje para generar recomendaciones.</div>';return;}
+  let html='';
+  unique.forEach(loc=>{
+    makeRecommendationCards(loc, trip).forEach(card=>{
+      html += `<article class="rec-card"><span class="role-pill">${card.kind}</span><strong>${card.title}</strong><p class="mini">${card.q}</p><div class="rec-actions"><a target="_blank" href="${deepSearchUrl(card.q)}">Buscar web</a><a target="_blank" href="${deepImageUrl(card.q+' fotos')}">Imágenes</a><button onclick="addHighlightFromSearch('${loc.replaceAll("'","\\'")}','${card.title.replaceAll("'","\\'")}','${card.q.replaceAll("'","\\'")}')">Marcar highlight</button></div></article>`;
+    });
+  });
+  grid.innerHTML=html;
+}
+function addHighlightFromSearch(location,title,query){
+  if(!window.firebaseAddHighlight){alert('Firebase aún no está listo.');return;}
+  window.firebaseAddHighlight({location,title,query,createdAt:new Date().toISOString()});
+}
+function updateTripMetaPanel(){
+  const box=document.getElementById('tripMetaPanel');
+  if(!box)return;
+  const t=window.currentTripData||{};
+  box.innerHTML=`<b>${t.title||'Viaje sin nombre'}</b><br>
+  <span class="mini">Fechas: ${t.startDate||'—'} → ${t.endDate||'—'} · Estilo: ${t.style||'—'} · Ritmo: ${t.pace||'—'} · Presupuesto: ${t.budgetTarget||'—'}</span><br>
+  <span class="mini">Ubicaciones: ${(t.locations||[]).join(', ')||t.destination||'—'}</span>`;
+}
+function renderUsersPanel(){
+  const grid=document.getElementById('usersGrid');
+  if(!grid)return;
+  const trip=window.currentTripData||{};
+  const roles=trip.rolesByEmail||{};
+  const emails=Object.keys(roles).sort();
+  if(!emails.length){grid.innerHTML='<div class="warn">No hay usuarios cargados para este viaje.</div>';return;}
+  grid.innerHTML=emails.map(email=>`<article class="user-card"><strong>${email}</strong><span class="role-pill">${roles[email]}</span><div class="user-actions"><button onclick="firebaseChangeRolePrompt && firebaseChangeRolePrompt('${email}')">Cambiar rol</button><button onclick="firebaseRemoveMember && firebaseRemoveMember('${email}')">Quitar</button></div></article>`).join('');
+}
+window.openTripWizard=openTripWizard;window.closeTripWizard=closeTripWizard;window.parseTripWizard=parseTripWizard;window.renderRecommendations=renderRecommendations;window.renderUsersPanel=renderUsersPanel;window.updateTripMetaPanel=updateTripMetaPanel;
+
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 const firebaseConfig = {
   "apiKey": "AIzaSyD35W8eEb5F7E-1JmwowTsdfgO7RMz1DvY",
@@ -1778,6 +1965,9 @@ function selectTrip(tripId, user){
   unsubscribeTrip = onSnapshot(doc(db, "trips", tripId), (snap)=>{
     if(!snap.exists()) return;
     const data=snap.data();
+    window.currentTripData=data;
+    updateTripMetaPanel(); renderUsersPanel(); renderRecommendations();
+    if(data.mapCenter && data.mapCenter.lat && data.mapCenter.lon && window.map){ try{ map.setView([data.mapCenter.lat,data.mapCenter.lon], 8); }catch(e){} }
     const state=data.state || {};
     applyingRemote = true;
     window.applyPlannerState(state);
@@ -1807,27 +1997,49 @@ window.firebaseSaveTripState = async function(){
 }
 
 async function createTrip(){
+  openTripWizard();
+}
+
+async function createTripFromForm(data){
   const user=auth.currentUser; if(!user) return;
-  const title=prompt("Nombre del nuevo viaje:", "Nuevo viaje");
-  if(!title) return;
-  const id = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") + "-" + Date.now().toString(36);
+  if(!data.title){ alert("Falta nombre del viaje."); return; }
+  const id = data.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") + "-" + Date.now().toString(36);
+  const memberEmails=[...new Set([safeEmail(user.email), ...(data.memberEmails||[]).map(safeEmail).filter(Boolean)])];
+  const rolesByEmail={};
+  memberEmails.forEach(e=>rolesByEmail[e]=(e===safeEmail(user.email)?'owner':'editor'));
+  const firstLocation=(data.locations&&data.locations[0])||data.title;
+  let center=null;
+  try{
+    const res=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(firstLocation));
+    const arr=await res.json();
+    if(arr&&arr[0]) center={lat:parseFloat(arr[0].lat), lon:parseFloat(arr[0].lon), label:arr[0].display_name};
+  }catch(e){ console.warn('geocode failed', e); }
   await setDoc(doc(db, "trips", id), {
-    title,
-    destination:"",
+    title:data.title,
+    destination:firstLocation||"",
+    locations:data.locations||[],
+    startDate:data.startDate||"",
+    endDate:data.endDate||"",
+    style:data.style||"balanceado",
+    pace:data.pace||"balanceado",
+    budgetTarget:data.budgetTarget||"",
+    notes:data.notes||"",
+    mapCenter:center,
     ownerUid:user.uid,
     ownerEmail:safeEmail(user.email),
-    allowedEmails:[safeEmail(user.email)],
-    rolesByEmail:{[safeEmail(user.email)]:"owner"},
-    state:{itineraryPlan:[],plannerNotes:{},customPoints:[],selectedPlan:[]},
+    allowedEmails:memberEmails,
+    rolesByEmail,
+    state:{itineraryPlan:[],plannerNotes:{},customPoints:[],selectedPlan:[],highlights:[]},
     createdAt:serverTimestamp(),
     updatedAt:serverTimestamp(),
     updatedBy:safeEmail(user.email)
   });
+  closeTripWizard();
   $("tripSelect").value=id;
   selectTrip(id,user);
 }
 
-async function inviteEmail(){
+async function inviteEmailasync function inviteEmail(){
   const user=auth.currentUser; if(!user || !window.currentTripId) return;
   const email=safeEmail(prompt("Correo a invitar:", ""));
   if(!email) return;
@@ -1843,6 +2055,46 @@ async function inviteEmail(){
   alert(email + " invitado como " + valid + ". Debe entrar con ese Google.");
 }
 
+async function firebaseInviteMemberPrompt(){
+  return inviteEmail();
+}
+async function firebaseChangeRolePrompt(email){
+  const user=auth.currentUser; if(!user || !window.currentTripId) return;
+  const role=(prompt("Nuevo rol para "+email+": owner, editor o viewer", "editor")||"editor").toLowerCase();
+  const valid=["owner","editor","viewer"].includes(role)?role:"editor";
+  await updateDoc(doc(db,"trips",window.currentTripId), {
+    [`rolesByEmail.${email}`]: valid,
+    updatedAt:serverTimestamp(),
+    updatedBy:safeEmail(user.email)
+  });
+}
+async function firebaseRemoveMember(email){
+  const user=auth.currentUser; if(!user || !window.currentTripId) return;
+  if(!confirm("¿Quitar acceso a "+email+" de este viaje?")) return;
+  await updateDoc(doc(db,"trips",window.currentTripId), {
+    allowedEmails: arrayRemove(email),
+    [`rolesByEmail.${email}`]: deleteField(),
+    updatedAt:serverTimestamp(),
+    updatedBy:safeEmail(user.email)
+  });
+}
+window.firebaseInviteMemberPrompt=firebaseInviteMemberPrompt;
+window.firebaseChangeRolePrompt=firebaseChangeRolePrompt;
+window.firebaseRemoveMember=firebaseRemoveMember;
+window.firebaseAddHighlight=async function(h){
+  if(!window.currentTripId || !auth.currentUser) return;
+  const state=window.getPlannerState?window.getPlannerState():{};
+  state.highlights=state.highlights||[];
+  state.highlights.push({...h, by:safeEmail(auth.currentUser.email)});
+  await setDoc(doc(db,"trips",window.currentTripId), {
+    state,
+    updatedAt:serverTimestamp(),
+    updatedBy:safeEmail(auth.currentUser.email)
+  }, {merge:true});
+  alert("Highlight agregado al viaje.");
+};
+
+$("tripWizardForm")?.addEventListener("submit", async (e)=>{ e.preventDefault(); await createTripFromForm(window.parseTripWizard()); });
 $("loginBtn")?.addEventListener("click", async ()=>{
   $("authMsg").textContent="Abriendo Google...";
   try{ await signInWithPopup(auth, provider); }
