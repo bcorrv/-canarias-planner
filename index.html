@@ -1,9 +1,8 @@
 <!doctype html>
-<!-- VERSION: HTML-v26-CHECKED | syntax-check local OK | 2026-06-28 -->
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Planner de Viajes · Firebase V26</title>
+<title>Planner de Viajes · Firebase V27</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#2563eb;--green:#16a34a;--yellow:#ca8a04;--purple:#7c3aed;--red:#dc2626;--bg:#f3f4f6;--card:#fff;--line:#e5e7eb;--ink:#172033;--muted:#667085}
@@ -177,8 +176,6 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
 </style>
 </head>
 <body>
-<div id="versionBadge" style="position:fixed;right:10px;bottom:10px;z-index:999999;background:#111827;color:#fff;padding:6px 10px;border-radius:999px;font:12px system-ui;box-shadow:0 4px 12px rgba(0,0,0,.25);opacity:.85">HTML-v26-CHECKED | syntax-check local OK | 2026-06-28</div>
-
 
 <div id="authOverlay" class="auth-overlay">
   <div class="auth-card">
@@ -196,7 +193,7 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
   </div>
 </div>
 
-<header><h1>Planner de Viajes · Firebase V26</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
+<header><h1>Planner de Viajes · Firebase V27</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p><div style="font-size:11px;opacity:.7">V27-CHECKED | storage instance OK</div></header>
 
 <div id="tripWizard" class="modal-overlay">
   <div class="modal-card">
@@ -2357,6 +2354,7 @@ const INITIAL_TRIP_ID = "canarias-2028";
 const ALLOWED_EMAILS = [OWNER_EMAIL, INITIAL_PARTICIPANT].map(x=>x.toLowerCase());
 
 const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
 const auth = getAuth(app);
 const db = initializeFirestore(app, {
   experimentalAutoDetectLongPolling: true,
@@ -2822,11 +2820,14 @@ window.adminDeleteBacklogItem=adminDeleteBacklogItem;
 
 async function tripCreateDocument(){
   if(!window.currentTripId || !auth.currentUser) return;
-  const title=document.getElementById('docTitle').value.trim();
+  const titleEl=document.getElementById('docTitle');
+  const title=titleEl ? titleEl.value.trim() : "";
   if(!title){alert('Falta nombre del documento.');return;}
-  const scope=document.getElementById('docScope')?.value||'trip';
-  const file=document.getElementById('docFile')?.files?.[0]||null;
-  const id=`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+  const scopeEl=document.getElementById('docScope');
+  const scope=scopeEl ? scopeEl.value : 'trip';
+  const fileEl=document.getElementById('docFile');
+  const file=(fileEl && fileEl.files && fileEl.files[0]) ? fileEl.files[0] : null;
+  const id=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
   let downloadUrl="", storagePath="", fileName="", fileSize=0, contentType="";
   try{
     if(file){
@@ -2835,21 +2836,30 @@ async function tripCreateDocument(){
       contentType=file.type||"application/octet-stream";
       const safeName=file.name.replace(/[^a-zA-Z0-9._-]+/g,'_');
       storagePath = scope==="personal"
-        ? `users/${auth.currentUser.uid}/privateDocuments/${id}/${safeName}`
-        : `trips/${window.currentTripId}/documents/${id}/${safeName}`;
+        ? "users/"+auth.currentUser.uid+"/privateDocuments/"+id+"/"+safeName
+        : "trips/"+window.currentTripId+"/documents/"+id+"/"+safeName;
       const sref=storageRef(storage, storagePath);
-      await uploadBytes(sref, file, {contentType});
+      await uploadBytes(sref, file, {contentType:contentType});
       downloadUrl=await getDownloadURL(sref);
     }
+    const typeEl=document.getElementById('docType');
+    const ownerEl=document.getElementById('docOwner');
+    const dateEl=document.getElementById('docDate');
+    const urlEl=document.getElementById('docUrl');
+    const notesEl=document.getElementById('docNotes');
     const data={
-      title,
-      scope,
-      type:document.getElementById('docType').value,
-      owner:document.getElementById('docOwner').value.trim()||"Todos",
-      date:document.getElementById('docDate').value||"",
-      url:document.getElementById('docUrl').value.trim(),
-      notes:document.getElementById('docNotes').value.trim(),
-      fileName,fileSize,contentType,storagePath,downloadUrl,
+      title:title,
+      scope:scope,
+      type:typeEl ? typeEl.value : "otro",
+      owner:ownerEl && ownerEl.value.trim() ? ownerEl.value.trim() : "Todos",
+      date:dateEl ? dateEl.value : "",
+      url:urlEl ? urlEl.value.trim() : "",
+      notes:notesEl ? notesEl.value.trim() : "",
+      fileName:fileName,
+      fileSize:fileSize,
+      contentType:contentType,
+      storagePath:storagePath,
+      downloadUrl:downloadUrl,
       tripId:window.currentTripId,
       createdAt:serverTimestamp(),
       updatedAt:serverTimestamp(),
@@ -2860,8 +2870,8 @@ async function tripCreateDocument(){
     }else{
       await setDoc(doc(db,"trips",window.currentTripId,"documents",id), data);
     }
-    ['docTitle','docOwner','docDate','docUrl','docNotes'].forEach(x=>{const el=document.getElementById(x); if(el)el.value='';});
-    const f=document.getElementById('docFile'); if(f)f.value='';
+    ['docTitle','docOwner','docDate','docUrl','docNotes'].forEach(function(x){const el=document.getElementById(x); if(el)el.value='';});
+    if(fileEl) fileEl.value='';
   }catch(e){
     console.error(e);
     alert("No se pudo guardar/subir el documento. Revisa Firebase Storage y reglas.");
