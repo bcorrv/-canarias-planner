@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Planner de Viajes · Firebase V16</title>
+<title>Planner de Viajes · Firebase V17</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#2563eb;--green:#16a34a;--yellow:#ca8a04;--purple:#7c3aed;--red:#dc2626;--bg:#f3f4f6;--card:#fff;--line:#e5e7eb;--ink:#172033;--muted:#667085}
@@ -38,18 +38,31 @@ label{display:block;font-size:13px;font-weight:800;margin:8px 0 5px} select,inpu
 .nearby-item button{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:4px 7px;font-size:11px;font-weight:800;cursor:pointer;margin-right:4px}
 .custom-pin-label{width:34px;height:34px;border-radius:999px;background:#111827;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;border:2px solid white;box-shadow:0 3px 10px rgba(0,0,0,.35)}
 
-.auth-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1d4ed8);z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px}
-.auth-card{width:min(520px,100%);background:#fff;border-radius:24px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
-.auth-card h1{margin:0 0 8px;font-size:26px;color:#0f172a}
-.auth-card p{color:#475569;line-height:1.45}
-.auth-card button{border:0;background:#2563eb;color:#fff;border-radius:14px;padding:12px 16px;font-weight:900;cursor:pointer;width:100%;font-size:15px}
-.auth-warning{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:14px;padding:10px;margin:12px 0;font-size:13px}
+.auth-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:22px;background:
+radial-gradient(circle at 18% 12%,rgba(37,99,235,.32),transparent 34%),
+radial-gradient(circle at 82% 24%,rgba(20,184,166,.22),transparent 30%),
+radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
+#030712;color:#fff;overflow:hidden}
+.auth-overlay:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:48px 48px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.85),transparent);pointer-events:none}
+.auth-card{position:relative;width:min(560px,100%);border:1px solid rgba(255,255,255,.14);border-radius:30px;padding:30px;background:linear-gradient(180deg,rgba(15,23,42,.88),rgba(2,6,23,.92));box-shadow:0 34px 100px rgba(0,0,0,.58);backdrop-filter:blur(18px)}
+.auth-brand{display:inline-flex;align-items:center;gap:9px;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:7px 11px;background:rgba(255,255,255,.06);color:#c7d2fe;font-size:12px;font-weight:900;letter-spacing:.02em;margin-bottom:18px}
+.auth-logo{width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,#60a5fa,#14b8a6);display:inline-flex;align-items:center;justify-content:center;color:#020617;font-weight:1000}
+.auth-card h1{margin:0 0 10px;font-size:34px;line-height:1.02;color:#fff;letter-spacing:-.04em}
+.auth-card p{color:#cbd5e1;line-height:1.5;margin:0 0 18px}
+.auth-card button{border:0;background:#fff;color:#020617;border-radius:16px;padding:13px 16px;font-weight:950;cursor:pointer;width:100%;font-size:15px;box-shadow:0 18px 40px rgba(15,23,42,.45);transition:transform .15s ease,box-shadow .15s ease}
+.auth-card button:hover{transform:translateY(-1px);box-shadow:0 22px 54px rgba(37,99,235,.35)}
+.auth-subgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0 20px}
+.auth-chip{border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:10px;background:rgba(255,255,255,.055);color:#e2e8f0;font-size:12px}
+.auth-chip strong{display:block;color:#fff;font-size:13px;margin-bottom:2px}
+.auth-warning{background:rgba(251,191,36,.10);border:1px solid rgba(251,191,36,.28);color:#fde68a;border-radius:16px;padding:11px;margin:14px 0;font-size:13px}
+.auth-footer{margin-top:14px;font-size:12px;color:#94a3b8}
 .top-user{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-bottom:8px;font-size:12px;color:#475569}
 .top-user button{border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:5px 9px;font-weight:800;cursor:pointer}
 .sync-pill{display:inline-flex;gap:5px;align-items:center;border:1px solid #bbf7d0;background:#f0fdf4;color:#166534;border-radius:999px;padding:4px 8px;font-weight:800}
 .trip-switcher{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
 .trip-switcher select,.trip-switcher button{width:auto;border:1px solid #cbd5e1;background:#fff;border-radius:10px;padding:8px;font-weight:800}
 .trip-switcher button{cursor:pointer}
+@media(max-width:620px){.auth-card{padding:23px;border-radius:24px}.auth-card h1{font-size:28px}.auth-subgrid{grid-template-columns:1fr}}
 
 
 .planner-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
@@ -91,23 +104,25 @@ label{display:block;font-size:13px;font-weight:800;margin:8px 0 5px} select,inpu
 
 <div id="authOverlay" class="auth-overlay">
   <div class="auth-card">
-    <h1>Planner de Viajes</h1>
-    <p>Acceso privado con Google. Este planner guarda el viaje compartido en Firebase para que los cambios se vean entre cuentas autorizadas.</p>
-    <div class="auth-warning">
-      Correos autorizados en esta versión:<br>
-      <strong>bo.cverdugo@gmail.com</strong><br>
-      <strong>javiera.sarracinav@gmail.com</strong>
+    <div class="auth-brand"><span class="auth-logo">✈</span><span>PRIVATE TRAVEL PLANNER</span></div>
+    <h1>Diseña tu próximo viaje en equipo.</h1>
+    <p>Entra con Google para acceder a tus viajes, editar itinerarios, guardar puntos del mapa, notas y presupuesto compartido en tiempo real.</p>
+    <div class="auth-subgrid">
+      <div class="auth-chip"><strong>Mapa vivo</strong>puntos, rutas y referencias</div>
+      <div class="auth-chip"><strong>Colaborativo</strong>edición compartida</div>
+      <div class="auth-chip"><strong>Privado</strong>solo cuentas invitadas</div>
     </div>
-    <button id="loginBtn">Entrar con Google</button>
-    <p id="authMsg" style="font-size:13px;color:#64748b"></p>
+    <button id="loginBtn">Continuar con Google</button>
+    <div class="auth-footer">El acceso está limitado a usuarios autorizados por el administrador del viaje.</div>
+    <p id="authMsg" style="font-size:13px;color:#94a3b8;margin-top:12px"></p>
   </div>
 </div>
 
-<header><h1>Planner de Viajes · Firebase V16</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
+<header><h1>Planner de Viajes · Firebase V17</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
 <div class="shell">
 
 <div class="top-user">
-  <span class="sync-pill" id="syncStatus">Firebase: esperando login</span>
+  <span class="sync-pill" id="syncStatus">Esperando acceso</span>
   <span id="userLabel"></span>
   <button id="logoutBtn">Salir</button>
 </div>
@@ -1849,7 +1864,7 @@ onAuthStateChanged(auth, async (user)=>{
   const email=safeEmail(user.email);
   $("userLabel").textContent=(user.displayName||email) + " · " + email;
   if(!ALLOWED_EMAILS.includes(email)){
-    $("authMsg").innerHTML="Este correo no está en la lista inicial autorizada: <strong>"+email+"</strong>";
+    $("authMsg").innerHTML="Tu cuenta <strong>"+email+"</strong> no tiene acceso a este planner. Pide invitación al administrador del viaje.";
     $("authOverlay").style.display="flex";
     setSync("Correo no autorizado", false);
     return;
