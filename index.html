@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Canarias 2026 · Planner interactivo V15</title>
+<title>Planner de Viajes · Firebase V16</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#2563eb;--green:#16a34a;--yellow:#ca8a04;--purple:#7c3aed;--red:#dc2626;--bg:#f3f4f6;--card:#fff;--line:#e5e7eb;--ink:#172033;--muted:#667085}
@@ -37,6 +37,20 @@ label{display:block;font-size:13px;font-weight:800;margin:8px 0 5px} select,inpu
 .nearby-item strong{font-size:13px}
 .nearby-item button{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:4px 7px;font-size:11px;font-weight:800;cursor:pointer;margin-right:4px}
 .custom-pin-label{width:34px;height:34px;border-radius:999px;background:#111827;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;border:2px solid white;box-shadow:0 3px 10px rgba(0,0,0,.35)}
+
+.auth-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1d4ed8);z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px}
+.auth-card{width:min(520px,100%);background:#fff;border-radius:24px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.auth-card h1{margin:0 0 8px;font-size:26px;color:#0f172a}
+.auth-card p{color:#475569;line-height:1.45}
+.auth-card button{border:0;background:#2563eb;color:#fff;border-radius:14px;padding:12px 16px;font-weight:900;cursor:pointer;width:100%;font-size:15px}
+.auth-warning{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:14px;padding:10px;margin:12px 0;font-size:13px}
+.top-user{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-bottom:8px;font-size:12px;color:#475569}
+.top-user button{border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:5px 9px;font-weight:800;cursor:pointer}
+.sync-pill{display:inline-flex;gap:5px;align-items:center;border:1px solid #bbf7d0;background:#f0fdf4;color:#166534;border-radius:999px;padding:4px 8px;font-weight:800}
+.trip-switcher{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
+.trip-switcher select,.trip-switcher button{width:auto;border:1px solid #cbd5e1;background:#fff;border-radius:10px;padding:8px;font-weight:800}
+.trip-switcher button{cursor:pointer}
+
 
 .planner-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .stat{background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:8px}
@@ -74,8 +88,36 @@ label{display:block;font-size:13px;font-weight:800;margin:8px 0 5px} select,inpu
 </style>
 </head>
 <body>
-<header><h1>Canarias 2026 · Planner interactivo V15</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
+
+<div id="authOverlay" class="auth-overlay">
+  <div class="auth-card">
+    <h1>Planner de Viajes</h1>
+    <p>Acceso privado con Google. Este planner guarda el viaje compartido en Firebase para que los cambios se vean entre cuentas autorizadas.</p>
+    <div class="auth-warning">
+      Correos autorizados en esta versión:<br>
+      <strong>bo.cverdugo@gmail.com</strong><br>
+      <strong>javiera.sarracinav@gmail.com</strong>
+    </div>
+    <button id="loginBtn">Entrar con Google</button>
+    <p id="authMsg" style="font-size:13px;color:#64748b"></p>
+  </div>
+</div>
+
+<header><h1>Planner de Viajes · Firebase V16</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
 <div class="shell">
+
+<div class="top-user">
+  <span class="sync-pill" id="syncStatus">Firebase: esperando login</span>
+  <span id="userLabel"></span>
+  <button id="logoutBtn">Salir</button>
+</div>
+<div class="trip-switcher">
+  <strong>Viaje:</strong>
+  <select id="tripSelect"><option value="">Cargando...</option></select>
+  <button id="createTripBtn">Crear viaje</button>
+  <button id="inviteBtn">Invitar por email</button>
+</div>
+
 <nav class="tabs"><button class="tab-btn active" data-tab="mapa">Mapa + optimizador</button><button class="tab-btn" data-tab="imagenes">Imágenes por ruta</button><button class="tab-btn" data-tab="rutas">Rutas base</button><button class="tab-btn" data-tab="transporte">Transporte</button><button class="tab-btn" data-tab="inventario">Inventario</button><button class="tab-btn" data-tab="planner">Mi plan</button><button class="tab-btn" data-tab="resumen">Resumen</button></nav>
 <section id="mapa" class="tab active"><div class="map-layout"><aside class="card"><h2>Mapa operativo</h2><div class="map-focus-note">Filtro visual. Para rediseñar el viaje usa el panel “Optimizador” a la derecha.</div><label>Día / tramo</label><select id="dayFilter"><option value="all">Todos</option></select><label>Destino</label><select id="areaFilter"><option value="all">Todos</option></select><label>Ruta diaria base</label><select id="routeFilter"><option value="all">Todas las rutas</option></select><label>Categorías</label><div id="catChecks" class="checkgrid"></div><div class="filter-row"><button id="onlyRecommended">Solo recomendados</button><button id="showAll">Ver todo</button></div><label><input type="checkbox" id="showTransport" checked style="width:auto"> Mostrar costos de tramos</label><label>Buscar</label><input id="searchBox" placeholder="Ej: hotel, Teide, horario, US$..."><div class="legend"><span>🔵 Hotel sel.</span><span>🔷 Hotel opción</span><span>🔴 Rest.</span><span>🟣 Tour</span><span>🟢 Atractivo</span><span>⚫ Tramo</span></div><h3 style="margin-top:14px">Rutas base</h3><div id="routeButtons" class="route-list"></div></aside><main><div id="map"></div></main><aside class="card planner-panel">
 <h2>Panel del mapa</h2>
@@ -1182,12 +1224,16 @@ let map = L.map('map', {preferCanvas:true, scrollWheelZoom:true}).setView([28.65
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
 const markerLayer=L.layerGroup().addTo(map), routeLayer=L.layerGroup().addTo(map), transportLayer=L.layerGroup().addTo(map), customRouteLayer=L.layerGroup().addTo(map);
 let markerIndex={};
-let customPoints=[];
+var customPoints=[];
 let customLayer=L.layerGroup().addTo(map);
-let activeContext=null;
-let referencePoint=null;
-let itineraryPlan=[];
-let plannerNotes={};
+var activeContext=null;
+var referencePoint=null;
+var itineraryPlan=[];
+var plannerNotes={};
+var currentTripId=null;
+var currentUser=null;
+var firebaseReady=false;
+var saveDebounceTimer=null;
 const dayFilter=document.getElementById('dayFilter'), areaFilter=document.getElementById('areaFilter'), routeFilter=document.getElementById('routeFilter'), catChecks=document.getElementById('catChecks'), searchBox=document.getElementById('searchBox'), routeButtons=document.getElementById('routeButtons'), showTransport=document.getElementById('showTransport');
 const plannerList=document.getElementById('plannerList'), plannerSearch=document.getElementById('plannerSearch'), maxPerDay=document.getElementById('maxPerDay'), planOutput=document.getElementById('planOutput');
 let selectedPlan = new Set(items.filter(i=>i.defaultSelected && i.kind!=='operator').map(i=>i.uid));
@@ -1484,19 +1530,25 @@ function showDetailTab(id){
   const el=document.getElementById(id); if(el)el.classList.add('active');
 }
 function loadPlannerState(){
+  // Firebase loader runs after login. Local fallback is kept for offline/dev.
   try{
     const raw=localStorage.getItem('canariasPlannerV15');
-    if(raw){
+    if(raw && !firebaseReady){
       const data=JSON.parse(raw);
       itineraryPlan=data.itineraryPlan||[];
       plannerNotes=data.plannerNotes||{};
       customPoints=data.customPoints||customPoints;
-      rebuildCustomLayer();
+      if(window.rebuildCustomLayer) rebuildCustomLayer();
     }
   }catch(e){console.warn(e)}
 }
 function savePlannerState(){
-  try{localStorage.setItem('canariasPlannerV15', JSON.stringify({itineraryPlan, plannerNotes, customPoints}));}catch(e){console.warn(e)}
+  try{localStorage.setItem('canariasPlannerV15', JSON.stringify({itineraryPlan, plannerNotes, customPoints, selectedPlan:[...selectedPlan]}));}catch(e){console.warn(e)}
+  if(window.firebaseSaveTripState && firebaseReady && currentTripId){
+    clearTimeout(saveDebounceTimer);
+    saveDebounceTimer=setTimeout(()=>window.firebaseSaveTripState(), 450);
+  }
+}
 }
 function rebuildCustomLayer(){
   customLayer.clearLayers();
@@ -1584,11 +1636,230 @@ document.getElementById('optimizeBtn').onclick=optimizePlan;
 document.getElementById('selectBase').onclick=()=>{selectedPlan=new Set(items.filter(i=>i.defaultSelected && i.kind!=='operator').map(i=>i.uid));renderPlanner();optimizePlan();render();};
 document.getElementById('clearPlan').onclick=()=>{selectedPlan=new Set();renderPlanner();planOutput.innerHTML='';customRouteLayer.clearLayers();render();};
 plannerSearch.addEventListener('input',renderPlanner);
-window.openMapPoint=openMapPoint;window.openRoute=openRoute;window.togglePlan=togglePlan;window.deleteCustomPoint=deleteCustomPoint;window.renderContext=renderContext;
+window.openMapPoint=openMapPoint;window.openRoute=openRoute;window.togglePlan=togglePlan;window.deleteCustomPoint=deleteCustomPoint;window.renderContext=renderContext;window.renderTimeline=renderTimeline;window.renderPlanner=renderPlanner;window.rebuildCustomLayer=rebuildCustomLayer;window.optimizePlan=optimizePlan;window.getPlannerState=()=>({itineraryPlan, plannerNotes, customPoints, selectedPlan:[...selectedPlan]});window.applyPlannerState=(s)=>{itineraryPlan=s.itineraryPlan||[];plannerNotes=s.plannerNotes||{};customPoints=s.customPoints||[];selectedPlan=new Set(s.selectedPlan||[]);rebuildCustomLayer();renderPlanner();renderTimeline();render();};window.setFirebaseContext=(ctx)=>{currentTripId=ctx.tripId;currentUser=ctx.user;firebaseReady=true;};
 [dayFilter,areaFilter,routeFilter,searchBox,showTransport].forEach(el=>el.addEventListener('input',render));catChecks.addEventListener('change',render);
 document.querySelectorAll('.tab-btn').forEach(btn=>btn.onclick=()=>showTab(btn.dataset.tab));
 window.addEventListener('load',()=>{document.querySelectorAll('table').forEach(table=>{const heads=[...table.querySelectorAll('thead th')].map(x=>x.textContent.trim());table.querySelectorAll('tbody tr').forEach(row=>[...row.children].forEach((td,i)=>td.setAttribute('data-label',heads[i]||'')));});loadPlannerState();renderPlanner();renderTimeline();setTimeout(()=>{map.invalidateSize(true);render();},350);});
 window.addEventListener('resize',()=>setTimeout(()=>map.invalidateSize(true),150));
 render();
 </script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  "apiKey": "AIzaSyD35W8eEb5F7E-1JmwowTsdfgO7RMz1DvY",
+  "authDomain": "planner-22b96.firebaseapp.com",
+  "projectId": "planner-22b96",
+  "storageBucket": "planner-22b96.firebasestorage.app",
+  "messagingSenderId": "450488147512",
+  "appId": "1:450488147512:web:3c27d604d54bbc19ff90cd",
+  "measurementId": "G-T0Z3XTGHN7"
+};
+const OWNER_EMAIL = "bo.cverdugo@gmail.com";
+const INITIAL_PARTICIPANT = "javiera.sarracinav@gmail.com";
+const INITIAL_TRIP_NAME = "Canarias 2028";
+const INITIAL_TRIP_ID = "canarias-2028";
+const ALLOWED_EMAILS = [OWNER_EMAIL, INITIAL_PARTICIPANT].map(x=>x.toLowerCase());
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let unsubscribeTrip = null;
+let unsubscribeTrips = null;
+let applyingRemote = false;
+
+const $ = (id) => document.getElementById(id);
+function setSync(msg, ok=true){
+  const el=$("syncStatus");
+  if(el) {
+    el.textContent = msg;
+    el.style.background = ok ? "#f0fdf4" : "#fff7ed";
+    el.style.color = ok ? "#166534" : "#9a3412";
+    el.style.borderColor = ok ? "#bbf7d0" : "#fed7aa";
+  }
+}
+function safeEmail(email){ return String(email||"").toLowerCase().trim(); }
+
+async function ensureUser(user){
+  await setDoc(doc(db, "users", user.uid), {
+    uid:user.uid,
+    email:safeEmail(user.email),
+    displayName:user.displayName || "",
+    photoURL:user.photoURL || "",
+    updatedAt:serverTimestamp()
+  }, {merge:true});
+}
+
+async function ensureInitialTrip(user){
+  const tripRef = doc(db, "trips", INITIAL_TRIP_ID);
+  const snap = await getDoc(tripRef);
+  if(!snap.exists()){
+    await setDoc(tripRef, {
+      title: INITIAL_TRIP_NAME,
+      destination: "Islas Canarias",
+      ownerUid: user.uid,
+      ownerEmail: safeEmail(user.email),
+      allowedEmails: ALLOWED_EMAILS,
+      rolesByEmail: {
+        [OWNER_EMAIL]: "owner",
+        [INITIAL_PARTICIPANT]: "editor"
+      },
+      state: window.getPlannerState ? window.getPlannerState() : {itineraryPlan:[],plannerNotes:{},customPoints:[],selectedPlan:[]},
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      updatedBy: safeEmail(user.email)
+    }, {merge:true});
+  } else {
+    const data=snap.data();
+    if(data.ownerEmail===safeEmail(user.email)){
+      await updateDoc(tripRef, {
+        allowedEmails: arrayUnion(...ALLOWED_EMAILS),
+        [`rolesByEmail.${OWNER_EMAIL}`]: "owner",
+        [`rolesByEmail.${INITIAL_PARTICIPANT}`]: "editor",
+        updatedAt: serverTimestamp()
+      });
+    }
+  }
+}
+
+function listenTrips(user){
+  if(unsubscribeTrips) unsubscribeTrips();
+  const q = query(collection(db, "trips"), where("allowedEmails", "array-contains", safeEmail(user.email)));
+  unsubscribeTrips = onSnapshot(q, (snap)=>{
+    const sel=$("tripSelect");
+    if(!sel) return;
+    const prior = sel.value;
+    sel.innerHTML="";
+    const trips=[];
+    snap.forEach(d=>trips.push({id:d.id,...d.data()}));
+    if(!trips.length){
+      sel.innerHTML='<option value="">Sin viajes</option>';
+      return;
+    }
+    trips.sort((a,b)=>(a.title||"").localeCompare(b.title||""));
+    trips.forEach(t=>{
+      const opt=document.createElement("option");
+      opt.value=t.id; opt.textContent=t.title || t.id;
+      sel.appendChild(opt);
+    });
+    const next = prior && trips.some(t=>t.id===prior) ? prior : trips[0].id;
+    sel.value=next;
+    if(window.currentTripId !== next) selectTrip(next, user);
+  }, err=>{
+    console.error(err);
+    setSync("Error leyendo viajes", false);
+  });
+}
+
+function selectTrip(tripId, user){
+  if(unsubscribeTrip) unsubscribeTrip();
+  window.setFirebaseContext({tripId, user});
+  window.currentTripId = tripId;
+  setSync("Firebase: sincronizando");
+  unsubscribeTrip = onSnapshot(doc(db, "trips", tripId), (snap)=>{
+    if(!snap.exists()) return;
+    const data=snap.data();
+    const state=data.state || {};
+    applyingRemote = true;
+    window.applyPlannerState(state);
+    applyingRemote = false;
+    setSync("Firebase: sincronizado");
+  }, err=>{
+    console.error(err);
+    setSync("Error de sincronización", false);
+  });
+}
+
+window.firebaseSaveTripState = async function(){
+  if(applyingRemote || !window.currentTripId || !auth.currentUser) return;
+  const state = window.getPlannerState ? window.getPlannerState() : {};
+  setSync("Firebase: guardando...");
+  try{
+    await setDoc(doc(db, "trips", window.currentTripId), {
+      state,
+      updatedAt: serverTimestamp(),
+      updatedBy: safeEmail(auth.currentUser.email)
+    }, {merge:true});
+    setSync("Firebase: guardado");
+  } catch(e){
+    console.error(e);
+    setSync("Error guardando", false);
+  }
+}
+
+async function createTrip(){
+  const user=auth.currentUser; if(!user) return;
+  const title=prompt("Nombre del nuevo viaje:", "Nuevo viaje");
+  if(!title) return;
+  const id = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") + "-" + Date.now().toString(36);
+  await setDoc(doc(db, "trips", id), {
+    title,
+    destination:"",
+    ownerUid:user.uid,
+    ownerEmail:safeEmail(user.email),
+    allowedEmails:[safeEmail(user.email)],
+    rolesByEmail:{[safeEmail(user.email)]:"owner"},
+    state:{itineraryPlan:[],plannerNotes:{},customPoints:[],selectedPlan:[]},
+    createdAt:serverTimestamp(),
+    updatedAt:serverTimestamp(),
+    updatedBy:safeEmail(user.email)
+  });
+  $("tripSelect").value=id;
+  selectTrip(id,user);
+}
+
+async function inviteEmail(){
+  const user=auth.currentUser; if(!user || !window.currentTripId) return;
+  const email=safeEmail(prompt("Correo a invitar:", ""));
+  if(!email) return;
+  const role=(prompt("Rol: owner, editor o viewer", "editor")||"editor").toLowerCase();
+  const valid = ["owner","editor","viewer"].includes(role) ? role : "editor";
+  const ref=doc(db, "trips", window.currentTripId);
+  await updateDoc(ref, {
+    allowedEmails: arrayUnion(email),
+    [`rolesByEmail.${email}`]: valid,
+    updatedAt: serverTimestamp(),
+    updatedBy: safeEmail(user.email)
+  });
+  alert(email + " invitado como " + valid + ". Debe entrar con ese Google.");
+}
+
+$("loginBtn")?.addEventListener("click", async ()=>{
+  $("authMsg").textContent="Abriendo Google...";
+  try{ await signInWithPopup(auth, provider); }
+  catch(e){ console.error(e); $("authMsg").textContent="Error: " + e.message; }
+});
+$("logoutBtn")?.addEventListener("click", ()=>signOut(auth));
+$("createTripBtn")?.addEventListener("click", createTrip);
+$("inviteBtn")?.addEventListener("click", inviteEmail);
+$("tripSelect")?.addEventListener("change", (e)=>{ if(auth.currentUser && e.target.value) selectTrip(e.target.value, auth.currentUser); });
+
+onAuthStateChanged(auth, async (user)=>{
+  if(!user){
+    $("authOverlay").style.display="flex";
+    $("userLabel").textContent="";
+    setSync("Firebase: sin sesión", false);
+    return;
+  }
+  const email=safeEmail(user.email);
+  $("userLabel").textContent=(user.displayName||email) + " · " + email;
+  if(!ALLOWED_EMAILS.includes(email)){
+    $("authMsg").innerHTML="Este correo no está en la lista inicial autorizada: <strong>"+email+"</strong>";
+    $("authOverlay").style.display="flex";
+    setSync("Correo no autorizado", false);
+    return;
+  }
+  $("authOverlay").style.display="none";
+  setSync("Firebase: login OK");
+  await ensureUser(user);
+  await ensureInitialTrip(user);
+  listenTrips(user);
+});
+</script>
+
 </body></html>
