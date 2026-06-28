@@ -1,0 +1,2 @@
+Canarias Planner Interactivo V15
+Base: HTML estático + localStorage
