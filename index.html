@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Planner de Viajes · Firebase V20</title>
+<title>Planner de Viajes · Firebase V21</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#2563eb;--green:#16a34a;--yellow:#ca8a04;--purple:#7c3aed;--red:#dc2626;--bg:#f3f4f6;--card:#fff;--line:#e5e7eb;--ink:#172033;--muted:#667085}
@@ -130,7 +130,7 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
   </div>
 </div>
 
-<header><h1>Planner de Viajes · Firebase V20</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
+<header><h1>Planner de Viajes · Firebase V21</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
 
 <div id="tripWizard" class="modal-overlay">
   <div class="modal-card">
@@ -1848,7 +1848,7 @@ window.openTripWizard=openTripWizard;window.closeTripWizard=closeTripWizard;wind
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { initializeFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 const firebaseConfig = {
   "apiKey": "AIzaSyD35W8eEb5F7E-1JmwowTsdfgO7RMz1DvY",
@@ -1867,7 +1867,10 @@ const ALLOWED_EMAILS = [OWNER_EMAIL, INITIAL_PARTICIPANT].map(x=>x.toLowerCase()
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = initializeFirestore(app, {
+  experimentalAutoDetectLongPolling: true,
+  useFetchStreams: false
+});
 const provider = new GoogleAuthProvider();
 
 let unsubscribeTrip = null;
