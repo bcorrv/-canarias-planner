@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Planner de Viajes · Firebase V27</title>
+<title>Planner de Viajes · Firebase V28</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#2563eb;--green:#16a34a;--yellow:#ca8a04;--purple:#7c3aed;--red:#dc2626;--bg:#f3f4f6;--card:#fff;--line:#e5e7eb;--ink:#172033;--muted:#667085}
@@ -145,34 +145,6 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
 .admin-form-grid button{border:1px solid #2563eb;background:#2563eb;color:#fff;border-radius:12px;padding:10px;font-weight:900;cursor:pointer}
 @media(max-width:1050px){.admin-grid{grid-template-columns:1fr}.admin-layout{grid-template-columns:1fr}.admin-form-grid{grid-template-columns:1fr}.admin-form-grid .full{grid-column:auto}}
 
-
-.docs-grid,.packing-grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:12px}
-.doc-card,.packing-card{border:1px solid #e5e7eb;background:#fff;border-radius:14px;padding:10px;margin:8px 0}
-.doc-card h4,.packing-card h4{margin:0 0 4px}
-.doc-type-pill,.pack-status{display:inline-flex;font-size:11px;font-weight:900;border-radius:999px;padding:3px 7px;margin:2px 4px 2px 0;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
-.doc-form,.pack-form{background:#f8fafc;border:1px solid #e5e7eb;border-radius:16px;padding:12px}
-.doc-form textarea,.pack-form textarea{width:100%;min-height:80px;border:1px solid #cbd5e1;border-radius:10px;padding:10px;font-family:inherit}
-.doc-form button,.pack-form button,.pack-actions button{border:1px solid #2563eb;background:#2563eb;color:#fff;border-radius:12px;padding:9px 10px;font-weight:900;cursor:pointer}
-.pack-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.pack-actions button.secondary{background:#fff;color:#1d4ed8;border-color:#bfdbfe}
-.packing-category{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:10px;margin:10px 0}
-.packing-category h4{margin:0 0 8px;display:flex;justify-content:space-between;gap:8px}
-.pack-item-row{display:grid;grid-template-columns:26px 1fr 62px 86px;gap:8px;align-items:center;border-top:1px solid #f1f5f9;padding:7px 0;font-size:13px}
-.pack-item-row:first-of-type{border-top:0}
-.pack-item-row input[type="checkbox"]{width:18px;height:18px}
-.pack-qty{font-weight:900;color:#475569}
-.pack-owner{font-size:11px;color:#64748b}
-.pack-reco{border-left:4px solid #22c55e;background:#f0fdf4}
-@media(max-width:1050px){.docs-grid,.packing-grid{grid-template-columns:1fr}.pack-item-row{grid-template-columns:26px 1fr 48px}.pack-owner{display:none}}
-
-
-.doc-sensitive{border-left:4px solid #ef4444}
-.doc-trip{border-left:4px solid #2563eb}
-.doc-meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
-.doc-meta{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:7px;font-size:12px;word-break:break-word}
-.upload-hint{font-size:12px;color:#64748b;margin:4px 0 8px}
-@media(max-width:900px){.doc-meta-grid{grid-template-columns:1fr}}
-
 </style>
 </head>
 <body>
@@ -193,7 +165,7 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
   </div>
 </div>
 
-<header><h1>Planner de Viajes · Firebase V27</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p><div style="font-size:11px;opacity:.7">V27-CHECKED | storage instance OK</div></header>
+<header><h1>Planner de Viajes · Firebase V28</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p><div style="font-size:11px;opacity:.75;padding:4px 12px;color:#64748b">V28-ROLLBACK-STABLE | Admin OK | Sin Storage</div></header>
 
 <div id="tripWizard" class="modal-overlay">
   <div class="modal-card">
@@ -1510,124 +1482,6 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
   </div>
 </section>
 
-
-<section id="documentos" class="tab">
-  <div class="card">
-    <h2>Documentos del viaje</h2>
-    <p class="muted">Guarda pasaportes, seguros, reservas, vuelos, hoteles, tickets, links y notas importantes. Permite subir archivos reales a Firebase Storage y guardar la metadata en Firestore.</p>
-    <div class="docs-grid">
-      <aside class="doc-form">
-        <h3>Agregar documento</h3>
-        <label>Nombre</label>
-        <input id="docTitle" placeholder="Ej: Seguro de viaje Basti">
-        <label>Alcance</label>
-        <select id="docScope">
-          <option value="trip">Documento del viaje</option>
-          <option value="personal">Documento personal sensible</option>
-        </select>
-        <label>Tipo</label>
-        <select id="docType">
-          <option value="pasaporte">Pasaporte / identificación</option>
-          <option value="vuelo">Vuelo</option>
-          <option value="hotel">Hotel</option>
-          <option value="auto">Auto / transporte</option>
-          <option value="seguro">Seguro</option>
-          <option value="entrada">Entrada / ticket</option>
-          <option value="reserva">Reserva</option>
-          <option value="otro">Otro</option>
-        </select>
-        <label>Persona asociada</label>
-        <input id="docOwner" placeholder="Ej: Basti / Javiera / Todos">
-        <label>Fecha relevante</label>
-        <input id="docDate" type="date">
-        <label>Archivo</label>
-        <input id="docFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.webp,.doc,.docx,.xls,.xlsx,.txt">
-        <div class="upload-hint">Archivos sugeridos: PDF, JPG/PNG, documentos livianos. Para datos sensibles, usa alcance personal.</div>
-        <label>Link externo opcional</label>
-        <input id="docUrl" placeholder="https://...">
-        <label>Notas</label>
-        <textarea id="docNotes" placeholder="Código de reserva, vencimiento, instrucciones, etc."></textarea>
-        <button onclick="tripCreateDocument()">Guardar documento</button>
-      </aside>
-      <main>
-        <div class="filter-row" style="margin-bottom:10px">
-          <input id="docSearch" placeholder="Buscar documento">
-          <select id="docFilterType" onchange="renderTripDocuments()">
-            <option value="">Todos los tipos</option>
-            <option value="pasaporte">Pasaporte / identificación</option>
-            <option value="vuelo">Vuelo</option>
-            <option value="hotel">Hotel</option>
-            <option value="auto">Auto / transporte</option>
-            <option value="seguro">Seguro</option>
-            <option value="entrada">Entrada / ticket</option>
-            <option value="reserva">Reserva</option>
-            <option value="otro">Otro</option>
-          </select>
-          <button onclick="renderTripDocuments()">Buscar</button><button onclick="exportTripDocumentsCSV()">Exportar CSV</button>
-        </div>
-        <div id="documentsList"></div>
-      </main>
-    </div>
-  </div>
-</section>
-
-<section id="maletas" class="tab">
-  <div class="card">
-    <h2>Preparador de maletas</h2>
-    <p class="muted">Checklist colaborativa para decidir qué llevar según destino, duración, clima, estilo de viaje y actividades. Puedes generar una base automática y luego modificarla.</p>
-    <div class="packing-grid">
-      <aside class="pack-form">
-        <h3>Generador base</h3>
-        <p class="mini">Usa la información del viaje actual para proponer una lista inicial. Luego cada persona puede marcar, editar o agregar ítems.</p>
-        <label>Tipo de equipaje</label>
-        <select id="packLuggageType">
-          <option value="maleta">Maleta</option>
-          <option value="mochila">Mochila</option>
-          <option value="mixto">Mixto</option>
-        </select>
-        <label>Clima esperado</label>
-        <select id="packClimate">
-          <option value="templado">Templado</option>
-          <option value="caluroso">Caluroso</option>
-          <option value="frio">Frío</option>
-          <option value="lluvia">Lluvia / variable</option>
-          <option value="playa">Playa</option>
-          <option value="trekking">Trekking / naturaleza</option>
-        </select>
-        <label>Notas de equipaje</label>
-        <textarea id="packNotes" placeholder="Ej: llevar ropa para trekking, cenas casuales, evitar sobrepeso, etc."></textarea>
-        <div class="pack-actions">
-          <button onclick="generatePackingBase()">Generar recomendación base</button>
-          <button class="secondary" onclick="tripCreatePackingItemPrompt()">Agregar item manual</button>
-        </div>
-        <hr style="border:0;border-top:1px solid #e5e7eb;margin:14px 0">
-        <h3>Resumen</h3>
-        <div id="packingSummary" class="route-base-panel">Sin datos todavía.</div>
-      </aside>
-      <main>
-        <div class="filter-row" style="margin-bottom:10px">
-          <input id="packingSearch" placeholder="Buscar item">
-          <select id="packingFilter" onchange="renderPackingList()">
-            <option value="">Todas las categorías</option>
-            <option value="documentos">Documentos</option>
-            <option value="ropa">Ropa</option>
-            <option value="calzado">Calzado</option>
-            <option value="higiene">Higiene</option>
-            <option value="salud">Salud</option>
-            <option value="tecnologia">Tecnología</option>
-            <option value="playa">Playa</option>
-            <option value="trekking">Trekking</option>
-            <option value="viaje">Viaje / avión</option>
-            <option value="otros">Otros</option>
-          </select>
-          <button onclick="renderPackingList()">Buscar</button>
-        </div>
-        <div id="packingList"></div>
-      </main>
-    </div>
-  </div>
-</section>
-
 <section id="resumen" class="tab"><div class="grid"><div class="card span-3"><h3>Total pp base</h3><div class="kpi">$4,25M CLP</div><p class="muted">≈ US$4.473 pp con USD ref. $950 CLP.</p></div><div class="card span-3"><h3>Puntos</h3><div class="kpi">102</div><p class="muted">Recomendados + opciones.</p></div><div class="card span-3"><h3>Rutas base</h3><div class="kpi">15</div><p class="muted">Días conectados.</p></div><div class="card span-3"><h3>Tramos</h3><div class="kpi">64</div><p class="muted">Transporte con costo.</p></div><div class="card span-12"><div class="warn"><strong>Sobre horarios:</strong> están anotados como horarios de planificación para octubre 2026. Antes de pagar reservas hay que confirmar proveedor por proveedor, pero ya no necesitas salir a Google para entender si conviene mañana/tarde/cena.</div></div></div></section>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2064,103 +1918,6 @@ render();
 <script>
 
 
-
-window.tripDocuments=[];
-window.personalDocuments=[];
-window.packingItems=[];
-
-function renderTripDocuments(){
-  const box=document.getElementById('documentsList'); if(!box)return;
-  const q=(document.getElementById('docSearch')?.value||'').toLowerCase();
-  const type=document.getElementById('docFilterType')?.value||'';
-  const docs=(window.tripDocuments||[]).filter(d=>{
-    const txt=[d.title,d.type,d.owner,d.notes,d.url,d.fileName,d.scope].join(' ').toLowerCase();
-    return (!q||txt.includes(q)) && (!type||d.type===type);
-  }).sort((a,b)=>String(a.date||'9999').localeCompare(String(b.date||'9999')));
-  if(!docs.length){box.innerHTML='<div class="warn">Aún no hay documentos guardados para este viaje.</div>';return;}
-  box.innerHTML=docs.map(d=>{
-    const scope=d.scope||'trip';
-    const cls=scope==='personal'?'doc-sensitive':'doc-trip';
-    const fileLabel=d.fileName?`<div class="doc-meta"><b>Archivo</b><br>${d.fileName}</div>`:'';
-    const sizeLabel=d.fileSize?`<div class="doc-meta"><b>Tamaño</b><br>${Math.round(Number(d.fileSize||0)/1024)} KB</div>`:'';
-    const pathLabel=d.storagePath?`<div class="doc-meta"><b>Storage</b><br>${String(d.storagePath).split('/').slice(-2).join('/')}</div>`:'';
-    return `<article class="doc-card ${cls}"><h4>${d.title||'Documento'}</h4><span class="doc-type-pill">${scope==='personal'?'Personal sensible':'Viaje'}</span><span class="doc-type-pill">${d.type||'otro'}</span><span class="doc-type-pill">${d.owner||'Todos'}</span>${d.date?`<span class="doc-type-pill">${d.date}</span>`:''}<div class="doc-meta-grid">${fileLabel}${sizeLabel}${pathLabel}</div><p class="mini">${d.notes||''}</p><div class="admin-actions">${d.downloadUrl?`<a target="_blank" href="${d.downloadUrl}">Abrir archivo</a>`:''}${d.url?`<a target="_blank" href="${d.url}">Abrir link</a>`:''}<button onclick="tripEditDocument('${d.id}')">Editar</button><button onclick="tripDeleteDocument('${d.id}','${scope}')">Eliminar</button></div></article>`;
-  }).join('');
-}
-function exportTripDocumentsCSV(){
-  const rows=[['scope','type','title','owner','date','fileName','url','downloadUrl','notes']];
-  (window.tripDocuments||[]).forEach(d=>rows.push([d.scope||'trip',d.type||'',d.title||'',d.owner||'',d.date||'',d.fileName||'',d.url||'',d.downloadUrl||'',d.notes||'']));
-  const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='documentos-viaje.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-function renderPackingList(){
-  const box=document.getElementById('packingList'); if(!box)return;
-  const q=(document.getElementById('packingSearch')?.value||'').toLowerCase();
-  const filter=document.getElementById('packingFilter')?.value||'';
-  const items=(window.packingItems||[]).filter(i=>{
-    const txt=[i.name,i.category,i.notes,i.owner].join(' ').toLowerCase();
-    return (!q||txt.includes(q)) && (!filter||i.category===filter);
-  }).sort((a,b)=>String(a.category||'').localeCompare(String(b.category||''),'es') || String(a.name||'').localeCompare(String(b.name||''),'es'));
-  if(!items.length){box.innerHTML='<div class="warn">Aún no hay checklist de maleta. Genera una recomendación base o agrega ítems manuales.</div>'; updatePackingSummary(); return;}
-  const cats=[...new Set(items.map(i=>i.category||'otros'))];
-  box.innerHTML=cats.map(cat=>{
-    const arr=items.filter(i=>(i.category||'otros')===cat);
-    const done=arr.filter(i=>i.packed).length;
-    return `<section class="packing-category"><h4><span>${cat}</span><span class="mini">${done}/${arr.length}</span></h4>${arr.map(i=>`<div class="pack-item-row ${i.recommended?'pack-reco':''}"><input type="checkbox" ${i.packed?'checked':''} onchange="tripTogglePackingItem('${i.id}',this.checked)"><div><strong>${i.name}</strong><br><span class="mini">${i.notes||''}</span></div><div class="pack-qty">${i.qty||1}</div><div class="pack-owner">${i.owner||'Todos'}</div></div><div class="pack-actions"><button class="secondary" onclick="tripEditPackingItem('${i.id}')">Editar</button><button class="secondary" onclick="tripDeletePackingItem('${i.id}')">Eliminar</button></div>`).join('')}</section>`;
-  }).join('');
-  updatePackingSummary();
-}
-function updatePackingSummary(){
-  const box=document.getElementById('packingSummary'); if(!box)return;
-  const total=(window.packingItems||[]).length;
-  const done=(window.packingItems||[]).filter(i=>i.packed).length;
-  const docs=(window.packingItems||[]).filter(i=>i.category==='documentos').length;
-  const trip=window.currentTripData||{};
-  box.innerHTML=`<strong>${done}/${total}</strong> preparados<br><span class="mini">Viaje: ${trip.title||'—'} · Documentos críticos: ${docs}</span>`;
-}
-function packingBaseItems(trip={}, climate='templado', luggage='maleta'){
-  const locs=(trip.locations||[trip.destination||trip.title||'']).join(' ').toLowerCase();
-  const days=Math.max(1, Math.round(((trip.endDate&&trip.startDate)?((new Date(trip.endDate)-new Date(trip.startDate))/(86400000)+1):7)));
-  const style=(trip.style||'balanceado').toLowerCase();
-  const isBeach=climate==='playa'||locs.includes('playa')||style.includes('playa');
-  const isTrekking=climate==='trekking'||style.includes('trekking')||style.includes('naturaleza');
-  const isRain=climate==='lluvia';
-  const isCold=climate==='frio';
-  const base=[
-    ['documentos','Pasaporte / cédula vigente',1,'Documento indispensable',true],
-    ['documentos','Seguro de viaje',1,'Guardar póliza y teléfono de emergencia',true],
-    ['documentos','Reservas de vuelos y hoteles',1,'Ideal tener copia offline',true],
-    ['documentos','Tarjetas y efectivo básico',1,'Separar una tarjeta de respaldo',true],
-    ['viaje','Cargador de celular',1,'Llevar en equipaje de mano',true],
-    ['viaje','Adaptador universal',1,'Revisar enchufe del destino',true],
-    ['viaje','Botella reutilizable',1,'Útil para caminatas y aeropuertos',true],
-    ['ropa','Ropa interior',Math.min(days+2,14),'Cantidad ajustable por lavado',true],
-    ['ropa','Poleras / camisas',Math.min(days,10),'Capas según clima',true],
-    ['ropa','Pantalones / shorts',Math.ceil(days/3),'Combinar según actividades',true],
-    ['calzado','Zapatillas cómodas',1,'Prioridad para caminar',true],
-    ['higiene','Cepillo y pasta dental',1,'Kit básico',true],
-    ['higiene','Protector solar',1,'Incluso en clima templado',true],
-    ['salud','Medicamentos personales',1,'Con receta si aplica',true],
-    ['tecnologia','Power bank',1,'Muy útil en días largos',true]
-  ];
-  if(isBeach) base.push(['playa','Traje de baño',2,'Para playa/piscina',true],['playa','Toalla liviana',1,'Microfibra ideal',true],['playa','Sandalias',1,'Playa y descanso',true],['playa','Lentes de sol',1,'Protección UV',true]);
-  if(isTrekking) base.push(['trekking','Cortaviento / primera capa',1,'Para cambios de clima',true],['trekking','Mochila de día',1,'Agua, snacks y abrigo',true],['trekking','Bastones o soporte',1,'Opcional según rutas',true],['trekking','Calcetines técnicos',Math.min(days,6),'Evita ampollas',true]);
-  if(isRain) base.push(['ropa','Chaqueta impermeable',1,'Clima variable',true],['otros','Bolsa seca o ziploc',2,'Proteger documentos/electrónica',true]);
-  if(isCold) base.push(['ropa','Abrigo térmico',1,'Capas',true],['ropa','Gorro / guantes',1,'Según temperatura',true]);
-  if(luggage==='mochila') base.push(['otros','Candado pequeño',1,'Hostales/transporte',true],['otros','Bolsas organizadoras',3,'Comprimir ropa',true]);
-  return base.map(x=>({category:x[0],name:x[1],qty:x[2],notes:x[3],recommended:x[4],owner:'Todos',packed:false}));
-}
-window.renderTripDocuments=renderTripDocuments;
-window.exportTripDocumentsCSV=exportTripDocumentsCSV;
-window.renderPackingList=renderPackingList;
-window.updatePackingSummary=updatePackingSummary;
-window.packingBaseItems=packingBaseItems;
-
 function adminShowSection(id){
   document.querySelectorAll('.admin-nav button').forEach(b=>b.classList.toggle('active', b.dataset.adminSection===id));
   document.querySelectorAll('.admin-section').forEach(s=>s.classList.toggle('active', s.id===id));
@@ -2333,10 +2090,9 @@ window.renderTripZone=renderTripZone;window.renderLiveRouteBase=renderLiveRouteB
 
 </script>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-storage.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-import { initializeFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, where, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import { initializeFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, where, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 const firebaseConfig = {
   "apiKey": "AIzaSyD35W8eEb5F7E-1JmwowTsdfgO7RMz1DvY",
@@ -2354,7 +2110,6 @@ const INITIAL_TRIP_ID = "canarias-2028";
 const ALLOWED_EMAILS = [OWNER_EMAIL, INITIAL_PARTICIPANT].map(x=>x.toLowerCase());
 
 const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
 const auth = getAuth(app);
 const db = initializeFirestore(app, {
   experimentalAutoDetectLongPolling: true,
@@ -2368,9 +2123,6 @@ let unsubscribeCustomPoints = null;
 let unsubscribeItinerary = null;
 let unsubscribeNotes = null;
 let unsubscribeHighlights = null;
-let unsubscribeDocuments = null;
-let unsubscribePersonalDocuments = null;
-let unsubscribePacking = null;
 let applyingRemote = false;
 const PLATFORM_ADMINS = ['bo.cverdugo@gmail.com'];
 
@@ -2463,25 +2215,6 @@ function listenTripSubcollections(tripId){
   if(unsubscribeItinerary) unsubscribeItinerary();
   if(unsubscribeNotes) unsubscribeNotes();
   if(unsubscribeHighlights) unsubscribeHighlights();
-
-  if(unsubscribeDocuments) unsubscribeDocuments();
-  if(unsubscribePersonalDocuments) unsubscribePersonalDocuments();
-  if(unsubscribePacking) unsubscribePacking();
-
-  unsubscribeDocuments = onSnapshot(collection(db,"trips",tripId,"documents"), snap=>{
-    window.tripDocuments=[];
-window.personalDocuments=[];
-    snap.forEach(d=>window.tripDocuments.push({id:d.id,...d.data()}));
-    renderTripDocuments();
-  });
-
-  unsubscribePacking = onSnapshot(collection(db,"trips",tripId,"packing"), snap=>{
-    window.packingItems=[];
-    snap.forEach(d=>window.packingItems.push({id:d.id,...d.data()}));
-    renderPackingList();
-  });
-
-
 
   unsubscribeCustomPoints = onSnapshot(collection(db,"trips",tripId,"customPoints"), snap=>{
     customPoints.length = 0;
@@ -2816,151 +2549,6 @@ window.adminOpenTrip=adminOpenTrip;
 window.adminCreateBacklogItem=adminCreateBacklogItem;
 window.adminUpdateBacklogStatus=adminUpdateBacklogStatus;
 window.adminDeleteBacklogItem=adminDeleteBacklogItem;
-
-
-async function tripCreateDocument(){
-  if(!window.currentTripId || !auth.currentUser) return;
-  const titleEl=document.getElementById('docTitle');
-  const title=titleEl ? titleEl.value.trim() : "";
-  if(!title){alert('Falta nombre del documento.');return;}
-  const scopeEl=document.getElementById('docScope');
-  const scope=scopeEl ? scopeEl.value : 'trip';
-  const fileEl=document.getElementById('docFile');
-  const file=(fileEl && fileEl.files && fileEl.files[0]) ? fileEl.files[0] : null;
-  const id=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
-  let downloadUrl="", storagePath="", fileName="", fileSize=0, contentType="";
-  try{
-    if(file){
-      fileName=file.name;
-      fileSize=file.size;
-      contentType=file.type||"application/octet-stream";
-      const safeName=file.name.replace(/[^a-zA-Z0-9._-]+/g,'_');
-      storagePath = scope==="personal"
-        ? "users/"+auth.currentUser.uid+"/privateDocuments/"+id+"/"+safeName
-        : "trips/"+window.currentTripId+"/documents/"+id+"/"+safeName;
-      const sref=storageRef(storage, storagePath);
-      await uploadBytes(sref, file, {contentType:contentType});
-      downloadUrl=await getDownloadURL(sref);
-    }
-    const typeEl=document.getElementById('docType');
-    const ownerEl=document.getElementById('docOwner');
-    const dateEl=document.getElementById('docDate');
-    const urlEl=document.getElementById('docUrl');
-    const notesEl=document.getElementById('docNotes');
-    const data={
-      title:title,
-      scope:scope,
-      type:typeEl ? typeEl.value : "otro",
-      owner:ownerEl && ownerEl.value.trim() ? ownerEl.value.trim() : "Todos",
-      date:dateEl ? dateEl.value : "",
-      url:urlEl ? urlEl.value.trim() : "",
-      notes:notesEl ? notesEl.value.trim() : "",
-      fileName:fileName,
-      fileSize:fileSize,
-      contentType:contentType,
-      storagePath:storagePath,
-      downloadUrl:downloadUrl,
-      tripId:window.currentTripId,
-      createdAt:serverTimestamp(),
-      updatedAt:serverTimestamp(),
-      updatedBy:safeEmail(auth.currentUser.email)
-    };
-    if(scope==="personal"){
-      await setDoc(doc(db,"users",auth.currentUser.uid,"privateDocuments",id), data);
-    }else{
-      await setDoc(doc(db,"trips",window.currentTripId,"documents",id), data);
-    }
-    ['docTitle','docOwner','docDate','docUrl','docNotes'].forEach(function(x){const el=document.getElementById(x); if(el)el.value='';});
-    if(fileEl) fileEl.value='';
-  }catch(e){
-    console.error(e);
-    alert("No se pudo guardar/subir el documento. Revisa Firebase Storage y reglas.");
-  }
-}
-async function tripEditDocument(id){
-  if(!window.currentTripId || !auth.currentUser) return;
-  const d=(window.tripDocuments||[]).find(x=>x.id===id); if(!d)return;
-  const title=prompt("Nombre documento:", d.title||""); if(title===null)return;
-  const url=prompt("Link:", d.url||""); if(url===null)return;
-  const notes=prompt("Notas:", d.notes||""); if(notes===null)return;
-  const refDoc=d.scope==="personal"
-    ? doc(db,"users",auth.currentUser.uid,"privateDocuments",id)
-    : doc(db,"trips",window.currentTripId,"documents",id);
-  await setDoc(refDoc, {title,url,notes,updatedAt:serverTimestamp(),updatedBy:safeEmail(auth.currentUser.email)}, {merge:true});
-}
-async function tripDeleteDocument(id,scope='trip'){
-  if(!window.currentTripId || !auth.currentUser) return;
-  const d=(window.tripDocuments||[]).find(x=>x.id===id);
-  if(!confirm("¿Eliminar documento?")) return;
-  try{
-    if(d&&d.storagePath){
-      try{ await deleteObject(storageRef(storage,d.storagePath)); }catch(e){ console.warn("No se pudo borrar archivo Storage", e); }
-    }
-    if(scope==="personal"){
-      await deleteDoc(doc(db,"users",auth.currentUser.uid,"privateDocuments",id));
-    }else{
-      await deleteDoc(doc(db,"trips",window.currentTripId,"documents",id));
-    }
-  }catch(e){
-    console.error(e);
-    alert("No se pudo eliminar el documento.");
-  }
-}
-async function tripCreatePackingItemPrompt(){
-  if(!window.currentTripId || !auth.currentUser) return;
-  const name=prompt("Item a llevar:", ""); if(!name)return;
-  const category=(prompt("Categoría: documentos, ropa, calzado, higiene, salud, tecnologia, playa, trekking, viaje, otros", "otros")||"otros").toLowerCase();
-  const qty=parseInt(prompt("Cantidad:", "1")||"1",10);
-  const owner=prompt("Persona: Todos / Basti / Javiera / etc.", "Todos")||"Todos";
-  const id=`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
-  await setDoc(doc(db,"trips",window.currentTripId,"packing",id), {name,category,qty:isNaN(qty)?1:qty,owner,packed:false,recommended:false,createdAt:serverTimestamp(),updatedAt:serverTimestamp(),updatedBy:safeEmail(auth.currentUser.email)});
-}
-async function tripEditPackingItem(id){
-  if(!window.currentTripId || !auth.currentUser) return;
-  const item=(window.packingItems||[]).find(x=>x.id===id); if(!item)return;
-  const name=prompt("Item:", item.name||""); if(name===null)return;
-  const qty=parseInt(prompt("Cantidad:", item.qty||1)||"1",10);
-  const notes=prompt("Notas:", item.notes||""); if(notes===null)return;
-  await setDoc(doc(db,"trips",window.currentTripId,"packing",id), {name,qty:isNaN(qty)?1:qty,notes,updatedAt:serverTimestamp(),updatedBy:safeEmail(auth.currentUser.email)}, {merge:true});
-}
-async function tripDeletePackingItem(id){
-  if(!window.currentTripId || !auth.currentUser) return;
-  if(!confirm("¿Eliminar item de maleta?")) return;
-  await deleteDoc(doc(db,"trips",window.currentTripId,"packing",id));
-}
-async function tripTogglePackingItem(id,packed){
-  if(!window.currentTripId || !auth.currentUser) return;
-  await setDoc(doc(db,"trips",window.currentTripId,"packing",id), {packed,updatedAt:serverTimestamp(),updatedBy:safeEmail(auth.currentUser.email)}, {merge:true});
-}
-async function generatePackingBase(){
-  if(!window.currentTripId || !auth.currentUser) return;
-  const trip=window.currentTripData||{};
-  const climate=document.getElementById('packClimate')?.value||'templado';
-  const luggage=document.getElementById('packLuggageType')?.value||'maleta';
-  const notes=document.getElementById('packNotes')?.value||'';
-  const items=packingBaseItems(trip,climate,luggage);
-  if(!confirm(`Se agregarán ${items.length} ítems recomendados a la maleta. ¿Continuar?`)) return;
-  for(const item of items){
-    const id=`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
-    await setDoc(doc(db,"trips",window.currentTripId,"packing",id), {
-      ...item,
-      tripClimate:climate,
-      luggageType:luggage,
-      generatorNotes:notes,
-      createdAt:serverTimestamp(),
-      updatedAt:serverTimestamp(),
-      updatedBy:safeEmail(auth.currentUser.email)
-    });
-  }
-}
-window.tripCreateDocument=tripCreateDocument;
-window.tripEditDocument=tripEditDocument;
-window.tripDeleteDocument=tripDeleteDocument;
-window.tripCreatePackingItemPrompt=tripCreatePackingItemPrompt;
-window.tripEditPackingItem=tripEditPackingItem;
-window.tripDeletePackingItem=tripDeletePackingItem;
-window.tripTogglePackingItem=tripTogglePackingItem;
-window.generatePackingBase=generatePackingBase;
 
 $("loginBtn")?.addEventListener("click", async ()=>{
   $("authMsg").textContent="Abriendo Google...";
