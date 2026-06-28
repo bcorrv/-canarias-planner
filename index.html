@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Planner de Viajes · Firebase V19</title>
+<title>Planner de Viajes · Firebase V20</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#2563eb;--green:#16a34a;--yellow:#ca8a04;--purple:#7c3aed;--red:#dc2626;--bg:#f3f4f6;--card:#fff;--line:#e5e7eb;--ink:#172033;--muted:#667085}
@@ -130,7 +130,7 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
   </div>
 </div>
 
-<header><h1>Planner de Viajes · Firebase V19</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
+<header><h1>Planner de Viajes · Firebase V20</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p></header>
 
 <div id="tripWizard" class="modal-overlay">
   <div class="modal-card">
@@ -1996,24 +1996,38 @@ window.firebaseSaveTripState = async function(){
   }
 }
 
+
 async function createTrip(){
   openTripWizard();
 }
 
 async function createTripFromForm(data){
-  const user=auth.currentUser; if(!user) return;
-  if(!data.title){ alert("Falta nombre del viaje."); return; }
-  const id = data.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") + "-" + Date.now().toString(36);
+  const user=auth.currentUser; 
+  if(!user) return;
+  if(!data.title){ 
+    alert("Falta nombre del viaje."); 
+    return; 
+  }
+  const id = data.title.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9]+/g,"-")
+    .replace(/^-|-$/g,"") + "-" + Date.now().toString(36);
+
   const memberEmails=[...new Set([safeEmail(user.email), ...(data.memberEmails||[]).map(safeEmail).filter(Boolean)])];
   const rolesByEmail={};
   memberEmails.forEach(e=>rolesByEmail[e]=(e===safeEmail(user.email)?'owner':'editor'));
+
   const firstLocation=(data.locations&&data.locations[0])||data.title;
   let center=null;
   try{
     const res=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(firstLocation));
     const arr=await res.json();
     if(arr&&arr[0]) center={lat:parseFloat(arr[0].lat), lon:parseFloat(arr[0].lon), label:arr[0].display_name};
-  }catch(e){ console.warn('geocode failed', e); }
+  }catch(e){ 
+    console.warn('geocode failed', e); 
+  }
+
   await setDoc(doc(db, "trips", id), {
     title:data.title,
     destination:firstLocation||"",
@@ -2035,12 +2049,14 @@ async function createTripFromForm(data){
     updatedBy:safeEmail(user.email)
   });
   closeTripWizard();
-  $("tripSelect").value=id;
+  const sel=$("tripSelect");
+  if(sel) sel.value=id;
   selectTrip(id,user);
 }
 
-async function inviteEmailasync function inviteEmail(){
-  const user=auth.currentUser; if(!user || !window.currentTripId) return;
+async function inviteEmail(){
+  const user=auth.currentUser; 
+  if(!user || !window.currentTripId) return;
   const email=safeEmail(prompt("Correo a invitar:", ""));
   if(!email) return;
   const role=(prompt("Rol: owner, editor o viewer", "editor")||"editor").toLowerCase();
@@ -2058,8 +2074,10 @@ async function inviteEmailasync function inviteEmail(){
 async function firebaseInviteMemberPrompt(){
   return inviteEmail();
 }
+
 async function firebaseChangeRolePrompt(email){
-  const user=auth.currentUser; if(!user || !window.currentTripId) return;
+  const user=auth.currentUser; 
+  if(!user || !window.currentTripId) return;
   const role=(prompt("Nuevo rol para "+email+": owner, editor o viewer", "editor")||"editor").toLowerCase();
   const valid=["owner","editor","viewer"].includes(role)?role:"editor";
   await updateDoc(doc(db,"trips",window.currentTripId), {
@@ -2068,8 +2086,10 @@ async function firebaseChangeRolePrompt(email){
     updatedBy:safeEmail(user.email)
   });
 }
+
 async function firebaseRemoveMember(email){
-  const user=auth.currentUser; if(!user || !window.currentTripId) return;
+  const user=auth.currentUser; 
+  if(!user || !window.currentTripId) return;
   if(!confirm("¿Quitar acceso a "+email+" de este viaje?")) return;
   await updateDoc(doc(db,"trips",window.currentTripId), {
     allowedEmails: arrayRemove(email),
@@ -2078,9 +2098,11 @@ async function firebaseRemoveMember(email){
     updatedBy:safeEmail(user.email)
   });
 }
+
 window.firebaseInviteMemberPrompt=firebaseInviteMemberPrompt;
 window.firebaseChangeRolePrompt=firebaseChangeRolePrompt;
 window.firebaseRemoveMember=firebaseRemoveMember;
+
 window.firebaseAddHighlight=async function(h){
   if(!window.currentTripId || !auth.currentUser) return;
   const state=window.getPlannerState?window.getPlannerState():{};
@@ -2094,7 +2116,6 @@ window.firebaseAddHighlight=async function(h){
   alert("Highlight agregado al viaje.");
 };
 
-$("tripWizardForm")?.addEventListener("submit", async (e)=>{ e.preventDefault(); await createTripFromForm(window.parseTripWizard()); });
 $("loginBtn")?.addEventListener("click", async ()=>{
   $("authMsg").textContent="Abriendo Google...";
   try{ await signInWithPopup(auth, provider); }
