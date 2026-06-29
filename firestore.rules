@@ -1,0 +1,68 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userEmail() {
+      return request.auth.token.email;
+    }
+
+    function isPlatformAdmin() {
+      return signedIn() && userEmail() in ['bo.cverdugo@gmail.com'];
+    }
+
+    function isAllowedTrip(tripId) {
+      return signedIn()
+        && userEmail() in get(/databases/$(database)/documents/trips/$(tripId)).data.allowedEmails;
+    }
+
+    function roleOnTrip(tripId) {
+      return get(/databases/$(database)/documents/trips/$(tripId)).data.rolesByEmail[userEmail()];
+    }
+
+    function canEditTrip(tripId) {
+      return isAllowedTrip(tripId)
+        && roleOnTrip(tripId) in ['owner', 'editor'];
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isPlatformAdmin());
+      allow create, update: if signedIn() && (request.auth.uid == userId || isPlatformAdmin());
+      allow delete: if isPlatformAdmin();
+
+      match /privateDocuments/{documentId} {
+        allow read, write: if signedIn() && (request.auth.uid == userId || isPlatformAdmin());
+      }
+    }
+
+    match /trips/{tripId} {
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.allowedEmails is list
+        && userEmail() in request.resource.data.allowedEmails;
+
+      allow list: if signedIn();
+      allow get: if isAllowedTrip(tripId) || isPlatformAdmin();
+
+      allow update: if isPlatformAdmin()
+        || canEditTrip(tripId)
+        || (signedIn() && request.resource.data.ownerUid == request.auth.uid);
+
+      allow delete: if isPlatformAdmin()
+        || (isAllowedTrip(tripId) && roleOnTrip(tripId) == 'owner');
+
+      match /{subcollection}/{docId} {
+        allow read: if isAllowedTrip(tripId) || isPlatformAdmin();
+        allow write: if isPlatformAdmin() || canEditTrip(tripId);
+      }
+    }
+
+    match /platformBacklog/{itemId} {
+      allow read, write: if isPlatformAdmin();
+    }
+  }
+}
