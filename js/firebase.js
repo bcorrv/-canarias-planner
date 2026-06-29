@@ -1,5 +1,5 @@
 // Planner Firebase V31 Travel Planner modular — Firebase Auth/Firestore
-// Marker: V31-FIREBASE-JS-STABLE
+// Marker: V32-FIREBASE-JS-STABLE
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-storage.js";
@@ -940,4 +940,4 @@ onAuthStateChanged(auth, async function(user) {
   }
 });
 
-console.log("V31-FIREBASE-JS-STABLE loaded");
+console.log("V32-FIREBASE-JS-STABLE loaded");

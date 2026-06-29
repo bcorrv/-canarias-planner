@@ -175,3 +175,9 @@ radial-gradient(circle at 50% 90%,rgba(124,58,237,.22),transparent 36%),
 .document-toolbar button{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:7px 10px;font-weight:900;cursor:pointer}
 @media(max-width:900px){.doc-meta-grid{grid-template-columns:1fr}}
 
+
+
+/* V32 nav fix */
+.tabs{flex-wrap:wrap}
+.tab-btn[data-tab="documentos"],.tab-btn[data-tab="maletas"]{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
+
