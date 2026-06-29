@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Planner de Viajes · Firebase V30</title>
+<title>Travel Planner</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="css/styles.css?v=30">
+<link rel="stylesheet" href="css/styles.css?v=31">
 </head>
 <body>
 
@@ -24,7 +24,7 @@
   </div>
 </div>
 
-<header><h1>Planner de Viajes · Firebase V30</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p><div style="font-size:11px;opacity:.75;padding:4px 12px;color:#64748b">V30-MODULAR-STABLE | cache-busted JS | sin Storage</div></header>
+<header><h1>Travel Planner · Firebase V31</h1><p>Toca puntos del mapa o cualquier lugar de Canarias para crear referencias propias. El panel derecho muestra contexto, cercanos y optimización.</p><div style="font-size:11px;opacity:.75;padding:4px 12px;color:#64748b">V31-TRAVEL-PLANNER | modular + docs + packing + admin</div></header>
 
 <div id="tripWizard" class="modal-overlay">
   <div class="modal-card">
@@ -1351,6 +1351,11 @@
         <h3>Agregar documento</h3>
         <label>Nombre</label>
         <input id="docTitle" placeholder="Ej: Seguro de viaje Basti">
+        <label>Alcance</label>
+        <select id="docScope">
+          <option value="trip">Documento del viaje</option>
+          <option value="personal">Documento personal sensible</option>
+        </select>
         <label>Tipo</label>
         <select id="docType">
           <option value="pasaporte">Pasaporte / identificación</option>
@@ -1362,11 +1367,21 @@
           <option value="reserva">Reserva</option>
           <option value="otro">Otro</option>
         </select>
+        <label>Estado</label>
+        <select id="docStatus">
+          <option value="pending">Pendiente</option>
+          <option value="loaded">Cargado</option>
+          <option value="validated">Validado</option>
+          <option value="expired">Vencido</option>
+        </select>
         <label>Persona asociada</label>
         <input id="docOwner" placeholder="Ej: Basti / Javiera / Todos">
         <label>Fecha relevante</label>
         <input id="docDate" type="date">
-        <label>Link</label>
+        <label>Archivo opcional</label>
+        <input id="docFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.webp,.doc,.docx,.xls,.xlsx,.txt">
+        <div class="upload-hint">Si Storage está habilitado, el archivo se sube. Si no, puedes usar link externo.</div>
+        <label>Link externo opcional</label>
         <input id="docUrl" placeholder="https://...">
         <label>Notas</label>
         <textarea id="docNotes" placeholder="Código de reserva, vencimiento, instrucciones, etc."></textarea>
@@ -1386,7 +1401,7 @@
             <option value="reserva">Reserva</option>
             <option value="otro">Otro</option>
           </select>
-          <button onclick="renderTripDocuments()">Buscar</button>
+          <button onclick="renderTripDocuments()">Buscar</button><button onclick="generateRequiredDocuments()">Checklist base</button><button onclick="exportTripDocumentsCSV()">Exportar CSV</button>
         </div>
         <div id="documentsList"></div>
       </main>
@@ -1456,8 +1471,8 @@
 
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="js/app-core.js?v=30"></script>
-<script src="js/platform-modules.js?v=30"></script>
-<script type="module" src="js/firebase.js?v=30"></script>
+<script src="js/app-core.js?v=31"></script>
+<script src="js/platform-modules.js?v=31"></script>
+<script type="module" src="js/firebase.js?v=31"></script>
 
 </body></html>

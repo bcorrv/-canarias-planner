@@ -1,7 +1,8 @@
-// Planner Firebase V30 modular stable — Firebase Auth/Firestore
-// Marker: V30-FIREBASE-JS-STABLE
+// Planner Firebase V31 Travel Planner modular — Firebase Auth/Firestore
+// Marker: V31-FIREBASE-JS-STABLE
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-storage.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 import { initializeFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, where, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
@@ -16,6 +17,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = initializeFirestore(app, {
@@ -33,6 +35,7 @@ let unsubscribeItinerary = null;
 let unsubscribeNotes = null;
 let unsubscribeHighlights = null;
 let unsubscribeDocuments = null;
+let unsubscribePersonalDocuments = null;
 let unsubscribePacking = null;
 let applyingRemote = false;
 
@@ -163,6 +166,7 @@ function listenTripSubcollections(tripId) {
   if (unsubscribeNotes) unsubscribeNotes();
   if (unsubscribeHighlights) unsubscribeHighlights();
   if (unsubscribeDocuments) unsubscribeDocuments();
+  if (unsubscribePersonalDocuments) unsubscribePersonalDocuments();
   if (unsubscribePacking) unsubscribePacking();
 
   unsubscribeCustomPoints = onSnapshot(collection(db, "trips", tripId, "customPoints"), function(snap) {
@@ -202,10 +206,22 @@ function listenTripSubcollections(tripId) {
   });
 
   unsubscribeDocuments = onSnapshot(collection(db, "trips", tripId, "documents"), function(snap) {
-    window.tripDocuments = [];
-    snap.forEach(function(d) { window.tripDocuments.push(Object.assign({ id: d.id, scope: "trip" }, d.data())); });
+    const tripDocs = [];
+    snap.forEach(function(d) { tripDocs.push(Object.assign({ id: d.id, scope: "trip" }, d.data())); });
+    const personalDocs = window.personalDocuments || [];
+    window.tripDocuments = tripDocs.concat(personalDocs);
     if (window.renderTripDocuments) window.renderTripDocuments();
   });
+
+  if (auth.currentUser) {
+    unsubscribePersonalDocuments = onSnapshot(collection(db, "users", auth.currentUser.uid, "privateDocuments"), function(snap) {
+      window.personalDocuments = [];
+      snap.forEach(function(d) { window.personalDocuments.push(Object.assign({ id: d.id, scope: "personal" }, d.data())); });
+      const tripDocs = (window.tripDocuments || []).filter(function(x) { return x.scope !== "personal"; });
+      window.tripDocuments = tripDocs.concat(window.personalDocuments);
+      if (window.renderTripDocuments) window.renderTripDocuments();
+    });
+  }
 
   unsubscribePacking = onSnapshot(collection(db, "trips", tripId, "packing"), function(snap) {
     window.packingItems = [];
@@ -469,6 +485,13 @@ window.firebaseAddHighlight = async function firebaseAddHighlight(highlight) {
   alert("Highlight agregado al viaje.");
 };
 
+
+
+
+
+
+
+
 window.tripCreateDocument = async function tripCreateDocument() {
   if (!window.currentTripId || !auth.currentUser) return;
   const title = $("docTitle") ? $("docTitle").value.trim() : "";
@@ -476,23 +499,66 @@ window.tripCreateDocument = async function tripCreateDocument() {
     alert("Falta nombre del documento.");
     return;
   }
+
+  const scope = $("docScope") ? $("docScope").value : "trip";
+  const fileEl = $("docFile");
+  const file = fileEl && fileEl.files && fileEl.files[0] ? fileEl.files[0] : null;
   const id = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
-  await setDoc(doc(db, "trips", window.currentTripId, "documents", id), {
-    title: title,
-    type: $("docType") ? $("docType").value : "otro",
-    owner: $("docOwner") && $("docOwner").value.trim() ? $("docOwner").value.trim() : "Todos",
-    date: $("docDate") ? $("docDate").value : "",
-    url: $("docUrl") ? $("docUrl").value.trim() : "",
-    notes: $("docNotes") ? $("docNotes").value.trim() : "",
-    scope: "trip",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-    updatedBy: safeEmail(auth.currentUser.email)
-  });
-  ["docTitle", "docOwner", "docDate", "docUrl", "docNotes"].forEach(function(id) {
-    const el = $(id);
-    if (el) el.value = "";
-  });
+  let fileName = "";
+  let fileSize = 0;
+  let contentType = "";
+  let storagePath = "";
+  let downloadUrl = "";
+
+  try {
+    if (file) {
+      fileName = file.name;
+      fileSize = file.size;
+      contentType = file.type || "application/octet-stream";
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
+      storagePath = scope === "personal"
+        ? "users/" + auth.currentUser.uid + "/privateDocuments/" + id + "/" + safeName
+        : "trips/" + window.currentTripId + "/documents/" + id + "/" + safeName;
+      const sref = storageRef(storage, storagePath);
+      await uploadBytes(sref, file, { contentType: contentType });
+      downloadUrl = await getDownloadURL(sref);
+    }
+
+    const data = {
+      title: title,
+      scope: scope,
+      type: $("docType") ? $("docType").value : "otro",
+      status: $("docStatus") ? $("docStatus").value : (file || ($("docUrl") && $("docUrl").value.trim()) ? "loaded" : "pending"),
+      owner: $("docOwner") && $("docOwner").value.trim() ? $("docOwner").value.trim() : "Todos",
+      date: $("docDate") ? $("docDate").value : "",
+      url: $("docUrl") ? $("docUrl").value.trim() : "",
+      notes: $("docNotes") ? $("docNotes").value.trim() : "",
+      fileName: fileName,
+      fileSize: fileSize,
+      contentType: contentType,
+      storagePath: storagePath,
+      downloadUrl: downloadUrl,
+      tripId: window.currentTripId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      updatedBy: safeEmail(auth.currentUser.email)
+    };
+
+    if (scope === "personal") {
+      await setDoc(doc(db, "users", auth.currentUser.uid, "privateDocuments", id), data);
+    } else {
+      await setDoc(doc(db, "trips", window.currentTripId, "documents", id), data);
+    }
+
+    ["docTitle", "docOwner", "docDate", "docUrl", "docNotes"].forEach(function(x) {
+      const el = $(x);
+      if (el) el.value = "";
+    });
+    if (fileEl) fileEl.value = "";
+  } catch (e) {
+    console.error(e);
+    alert("No se pudo guardar/subir el documento. Revisa Storage Rules o usa link externo.");
+  }
 };
 
 window.tripEditDocument = async function tripEditDocument(id) {
@@ -505,7 +571,10 @@ window.tripEditDocument = async function tripEditDocument(id) {
   if (url === null) return;
   const notes = prompt("Notas:", d.notes || "");
   if (notes === null) return;
-  await setDoc(doc(db, "trips", window.currentTripId, "documents", id), {
+  const refDoc = d.scope === "personal"
+    ? doc(db, "users", auth.currentUser.uid, "privateDocuments", id)
+    : doc(db, "trips", window.currentTripId, "documents", id);
+  await setDoc(refDoc, {
     title: title,
     url: url,
     notes: notes,
@@ -514,10 +583,57 @@ window.tripEditDocument = async function tripEditDocument(id) {
   }, { merge: true });
 };
 
-window.tripDeleteDocument = async function tripDeleteDocument(id) {
+window.tripMarkDocument = async function tripMarkDocument(id, status) {
   if (!window.currentTripId || !auth.currentUser) return;
+  const d = (window.tripDocuments || []).find(function(x) { return x.id === id; });
+  if (!d) return;
+  const refDoc = d.scope === "personal"
+    ? doc(db, "users", auth.currentUser.uid, "privateDocuments", id)
+    : doc(db, "trips", window.currentTripId, "documents", id);
+  await setDoc(refDoc, {
+    status: status,
+    updatedAt: serverTimestamp(),
+    updatedBy: safeEmail(auth.currentUser.email)
+  }, { merge: true });
+};
+
+window.tripDeleteDocument = async function tripDeleteDocument(id, scope) {
+  if (!window.currentTripId || !auth.currentUser) return;
+  const d = (window.tripDocuments || []).find(function(x) { return x.id === id; });
   if (!confirm("¿Eliminar documento?")) return;
-  await deleteDoc(doc(db, "trips", window.currentTripId, "documents", id));
+  try {
+    if (d && d.storagePath) {
+      try {
+        await deleteObject(storageRef(storage, d.storagePath));
+      } catch (e) {
+        console.warn("No se pudo borrar archivo Storage", e);
+      }
+    }
+    if ((scope || (d && d.scope)) === "personal") {
+      await deleteDoc(doc(db, "users", auth.currentUser.uid, "privateDocuments", id));
+    } else {
+      await deleteDoc(doc(db, "trips", window.currentTripId, "documents", id));
+    }
+  } catch (e) {
+    console.error(e);
+    alert("No se pudo eliminar el documento.");
+  }
+};
+
+window.generateRequiredDocuments = async function generateRequiredDocuments() {
+  if (!window.currentTripId || !auth.currentUser || !window.requiredDocumentsForTrip) return;
+  const required = window.requiredDocumentsForTrip();
+  if (!confirm("Se crearán " + required.length + " documentos requeridos como pendientes. ¿Continuar?")) return;
+  for (const item of required) {
+    const id = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    await setDoc(doc(db, "trips", window.currentTripId, "documents", id), Object.assign({}, item, {
+      scope: "trip",
+      status: "pending",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      updatedBy: safeEmail(auth.currentUser.email)
+    }));
+  }
 };
 
 window.tripCreatePackingItemPrompt = async function tripCreatePackingItemPrompt() {
@@ -824,4 +940,4 @@ onAuthStateChanged(auth, async function(user) {
   }
 });
 
-console.log("V30-FIREBASE-JS-STABLE loaded");
+console.log("V31-FIREBASE-JS-STABLE loaded");

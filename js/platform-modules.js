@@ -1,4 +1,4 @@
-// V30-PLATFORM-MODULES
+// V31-PLATFORM-MODULES
 // Planner Firebase V29 modular - admin/documents/packing UI helpers
 window.tripDocuments=[];
 window.packingItems=[];
@@ -8,11 +8,20 @@ function renderTripDocuments(){
   const q=(document.getElementById('docSearch')?.value||'').toLowerCase();
   const type=document.getElementById('docFilterType')?.value||'';
   const docs=(window.tripDocuments||[]).filter(d=>{
-    const txt=[d.title,d.type,d.owner,d.notes,d.url].join(' ').toLowerCase();
+    const txt=[d.title,d.type,d.owner,d.notes,d.url,d.fileName,d.scope,d.status].join(' ').toLowerCase();
     return (!q||txt.includes(q)) && (!type||d.type===type);
   }).sort((a,b)=>String(a.date||'9999').localeCompare(String(b.date||'9999')));
   if(!docs.length){box.innerHTML='<div class="warn">Aún no hay documentos guardados para este viaje.</div>';return;}
-  box.innerHTML=docs.map(d=>`<article class="doc-card"><h4>${d.title||'Documento'}</h4><span class="doc-type-pill">${d.type||'otro'}</span><span class="doc-type-pill">${d.owner||'Todos'}</span>${d.date?`<span class="doc-type-pill">${d.date}</span>`:''}<p class="mini">${d.notes||''}</p><div class="admin-actions">${d.url?`<a target="_blank" href="${d.url}">Abrir link</a>`:''}<button onclick="tripEditDocument('${d.id}')">Editar</button><button onclick="tripDeleteDocument('${d.id}')">Eliminar</button></div></article>`).join('');
+  box.innerHTML=docs.map(d=>{
+    const scope=d.scope||'trip';
+    const cls=scope==='personal'?'doc-sensitive':'doc-trip';
+    const status=d.status||'pending';
+    const statusClass=status==='loaded'||status==='validated'?'status-loaded':(status==='expired'?'status-expired':'status-pending');
+    const fileLabel=d.fileName?`<div class="doc-meta"><b>Archivo</b><br>${d.fileName}</div>`:'';
+    const sizeLabel=d.fileSize?`<div class="doc-meta"><b>Tamaño</b><br>${Math.round(Number(d.fileSize||0)/1024)} KB</div>`:'';
+    const dateLabel=d.date?`<div class="doc-meta"><b>Fecha</b><br>${d.date}</div>`:'';
+    return `<article class="doc-card ${cls}"><h4>${d.title||'Documento'}</h4><span class="doc-type-pill">${scope==='personal'?'Personal sensible':'Viaje'}</span><span class="doc-type-pill">${d.type||'otro'}</span><span class="doc-type-pill">${d.owner||'Todos'}</span><span class="status-pill ${statusClass}">${status}</span><div class="doc-meta-grid">${fileLabel}${sizeLabel}${dateLabel}</div><p class="mini">${d.notes||''}</p><div class="admin-actions">${d.downloadUrl?`<a target="_blank" href="${d.downloadUrl}">Abrir archivo</a>`:''}${d.url?`<a target="_blank" href="${d.url}">Abrir link</a>`:''}<button onclick="tripEditDocument('${d.id}')">Editar</button><button onclick="tripMarkDocument('${d.id}','validated')">Validar</button><button onclick="tripDeleteDocument('${d.id}','${scope}')">Eliminar</button></div></article>`;
+  }).join('');
 }
 function renderPackingList(){
   const box=document.getElementById('packingList'); if(!box)return;
@@ -244,3 +253,35 @@ function renderLiveRouteBase(){
   box.innerHTML=html;
 }
 window.renderTripZone=renderTripZone;window.renderLiveRouteBase=renderLiveRouteBase;
+
+
+function exportTripDocumentsCSV(){
+  const rows=[['scope','type','status','title','owner','date','fileName','url','downloadUrl','notes']];
+  (window.tripDocuments||[]).forEach(d=>rows.push([d.scope||'trip',d.type||'',d.status||'',d.title||'',d.owner||'',d.date||'',d.fileName||'',d.url||'',d.downloadUrl||'',d.notes||'']));
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='travel-planner-documentos.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function requiredDocumentsForTrip(){
+  const trip=window.currentTripData||{};
+  const locs=(trip.locations||[]).join(' ').toLowerCase();
+  const base=[
+    {title:'Pasaporte / cédula vigente',type:'pasaporte',owner:'Cada viajero',notes:'Verificar vigencia antes de comprar vuelos.'},
+    {title:'Seguro de viaje',type:'seguro',owner:'Cada viajero',notes:'Guardar póliza, teléfono de emergencia y cobertura.'},
+    {title:'Reservas de vuelos',type:'vuelo',owner:'Todos',notes:'Código de reserva, horarios y equipaje incluido.'},
+    {title:'Reservas de hoteles',type:'hotel',owner:'Todos',notes:'Dirección, check-in, cancelación y contacto.'},
+    {title:'Medio de pago principal y respaldo',type:'otro',owner:'Cada viajero',notes:'Tarjeta principal, tarjeta backup y efectivo básico.'},
+    {title:'Contactos de emergencia',type:'otro',owner:'Todos',notes:'Emergencias, asistencia, embajada/consulado si aplica.'}
+  ];
+  if(locs.includes('canarias')||locs.includes('tenerife')||locs.includes('lanzarote')||locs.includes('graciosa')){
+    base.push({title:'Ferries / transporte entre islas',type:'auto',owner:'Todos',notes:'Tickets, horarios y condiciones de cambios.'});
+    base.push({title:'Reserva auto / licencia conducir',type:'auto',owner:'Conductor',notes:'Licencia, tarjeta de crédito y seguro del auto.'});
+  }
+  return base;
+}
+window.exportTripDocumentsCSV=exportTripDocumentsCSV;
+window.requiredDocumentsForTrip=requiredDocumentsForTrip;
